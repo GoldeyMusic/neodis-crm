@@ -385,7 +385,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
   const [uploadTotal, setUploadTotal] = useState(0)
   const [uploaded, setUploaded] = useState<PortalDocument[]>([])
   const [uploadCat, setUploadCat] = useState<string>('pedago')
-  const [uploadMatiere, setUploadMatiere] = useState<string>('')
+  const [uploadMatieres, setUploadMatieres] = useState<string[]>([])
   const [dragging, setDragging] = useState(false)
   const dragCounter = useRef(0)
 
@@ -415,7 +415,9 @@ function DocumentsTab({ data }: { data: PortalData }) {
     return map
   }, [allDocs])
 
-  const uploadOneFile = async (file: File, cat: string, matiere: string): Promise<PortalDocument | null> => {
+  const toggleMatiere = (m: string) => setUploadMatieres(prev => prev.includes(m) ? prev.filter(x => x !== m) : [...prev, m])
+
+  const uploadOneFile = async (file: File, cat: string, matieres: string[]): Promise<PortalDocument | null> => {
     if (file.size > 10 * 1024 * 1024) return null
     try {
       const ext = file.name.split('.').pop() || 'pdf'
@@ -432,7 +434,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
         date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
         data: urlData.publicUrl,
         uploadedBy: 'formateur',
-        matiere: cat === 'pedago' && matiere ? matiere : undefined,
+        matiere: cat === 'pedago' && matieres.length > 0 ? (matieres.length === 1 ? matieres[0] : matieres) : undefined,
       }
       await supabase.from('documents').upsert({ id: String(doc.id), data: doc, updated_at: new Date().toISOString() })
       return doc
@@ -449,7 +451,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
     setUploadTotal(files.length)
     const results: PortalDocument[] = []
     for (const file of files) {
-      const doc = await uploadOneFile(file, uploadCat, uploadMatiere)
+      const doc = await uploadOneFile(file, uploadCat, uploadMatieres)
       if (doc) results.push(doc)
       setUploadCount(prev => prev + 1)
     }
@@ -498,12 +500,12 @@ function DocumentsTab({ data }: { data: PortalData }) {
             <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>Matière :</div>
             <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
               {[...MATIERES, ...f.spec.filter(s => !MATIERES.includes(s))].map(m => (
-                <button key={m} onClick={() => setUploadMatiere(uploadMatiere === m ? '' : m)} style={{
+                <button key={m} onClick={() => toggleMatiere(m)} style={{
                   padding: '3px 9px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
                   fontFamily: 'DM Sans, sans-serif', border: '1px solid', transition: 'all .12s',
-                  borderColor: uploadMatiere === m ? '#2563EB' : 'var(--border)',
-                  background: uploadMatiere === m ? '#EFF6FF' : 'var(--surface)',
-                  color: uploadMatiere === m ? '#2563EB' : 'var(--text-tertiary)',
+                  borderColor: uploadMatieres.includes(m) ? '#2563EB' : 'var(--border)',
+                  background: uploadMatieres.includes(m) ? '#EFF6FF' : 'var(--surface)',
+                  color: uploadMatieres.includes(m) ? '#2563EB' : 'var(--text-tertiary)',
                 }}>
                   {m}
                 </button>
@@ -589,9 +591,9 @@ function DocumentsTab({ data }: { data: PortalData }) {
                     <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
                     <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
                       {d.taille}{d.date ? ` · ${d.date}` : ''}
-                      {d.matiere && (
-                        <span style={{ padding: '0 6px', borderRadius: 8, background: '#EFF6FF', color: '#2563EB', fontSize: 10, border: '1px solid #BFDBFE' }}>{d.matiere}</span>
-                      )}
+                      {d.matiere && (Array.isArray(d.matiere) ? d.matiere : [d.matiere]).map(m => (
+                        <span key={m} style={{ padding: '0 6px', borderRadius: 8, background: '#EFF6FF', color: '#2563EB', fontSize: 10, border: '1px solid #BFDBFE' }}>{m}</span>
+                      ))}
                       {d.uploadedBy === 'formateur' && (
                         <span style={{ padding: '0 5px', borderRadius: 6, background: '#F0FDF4', color: '#16A34A', fontSize: 10, border: '1px solid #BBF7D0' }}>Déposé par moi</span>
                       )}

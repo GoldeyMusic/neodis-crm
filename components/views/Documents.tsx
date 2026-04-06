@@ -846,7 +846,7 @@ export default function Documents() {
                   {d.formateur && <span>· {d.formateur}</span>}
                   {d.session && <span>· {d.session}</span>}
                   <span className="tag" style={{ fontSize: 10, padding: '1px 6px', background: colors.bg, color: colors.color, border: `1px solid ${colors.border}` }}>{catLabels[d.cat]}</span>
-                  {(d as any).matiere && <span className="tag" style={{ fontSize: 10, padding: '1px 6px', background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}>{(d as any).matiere}</span>}
+                  {(d as any).matiere && (Array.isArray((d as any).matiere) ? (d as any).matiere : [(d as any).matiere]).map((m: string) => <span key={m} className="tag" style={{ fontSize: 10, padding: '1px 6px', background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}>{m}</span>)}
                   {(d as any).uploadedBy === 'formateur' && <span className="tag" style={{ fontSize: 10, padding: '1px 6px', background: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0' }}>Via portail</span>}
                 </div>
               </div>
