@@ -446,8 +446,13 @@ function PlanningEditor({ session, onClose }: { session: Session; onClose: () =>
 }
 
 function BudgetTab({ session }: { session: Session }) {
-  const { formateurs, updateSession } = useCRM()
+  const { formateurs, updateSession, documents } = useCRM()
   const [editing, setEditing] = useState(false)
+
+  // Frais admin liés à cette session
+  const fraisAdmin = documents
+    .filter(d => d.cat === 'frais_admin' && d.session?.split(' | ').includes(session.name) && d.montant)
+    .reduce((sum, d) => sum + (d.montant ?? 0), 0)
 
   if (!session.planning || session.planning.length === 0) {
     return (
@@ -571,6 +576,21 @@ function BudgetTab({ session }: { session: Session }) {
         </div>
       )}
 
+      {/* Gestion administrative */}
+      <div className="card" style={{ overflow: 'hidden', marginBottom: 12 }}>
+        <div style={{ padding: '8px 16px', background: '#F5F0EB', borderBottom: '1px solid var(--border)', fontSize: 11, fontWeight: 700, color: '#78716C', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          Gestion administrative
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: COL, gap: 8, padding: '12px 16px', alignItems: 'center' }}>
+          <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Frais administratifs</div>
+          <div />
+          <div />
+          <div style={{ textAlign: 'right', fontFamily: 'DM Mono', fontSize: 13, fontWeight: 600, color: '#78716C' }}>
+            {fraisAdmin > 0 ? `${fraisAdmin.toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €` : '—'}
+          </div>
+        </div>
+      </div>
+
       {/* Total général */}
       <div className="card" style={{ overflow: 'hidden', marginBottom: 16 }}>
         <div style={{ display: 'grid', gridTemplateColumns: COL, gap: 8, padding: '13px 16px', alignItems: 'center' }}>
@@ -578,7 +598,7 @@ function BudgetTab({ session }: { session: Session }) {
           <div style={{ textAlign: 'center', fontFamily: 'DM Mono', fontSize: 13, fontWeight: 700 }}>{sfm.heures + smc.heures}h</div>
           <div />
           <div style={{ textAlign: 'right', fontFamily: 'DM Mono', fontSize: 15, fontWeight: 700, color: 'var(--ft)' }}>
-            {(sfm.budget + smc.budget) > 0 ? `${(sfm.budget + smc.budget).toLocaleString('fr-FR')} €` : '—'}
+            {(sfm.budget + smc.budget + fraisAdmin) > 0 ? `${(sfm.budget + smc.budget + fraisAdmin).toLocaleString('fr-FR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} €` : '—'}
           </div>
         </div>
       </div>
