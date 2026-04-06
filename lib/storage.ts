@@ -78,3 +78,26 @@ export async function saveImpact(impact: any[]): Promise<void> {
     .upsert({ id: 'all', data: impact, updated_at: new Date().toISOString() })
   if (error) console.error('[storage] saveImpact:', error.message)
 }
+
+/**
+ * Charge le profil utilisateur (photo, préférences) depuis Supabase.
+ */
+export async function loadUserProfile(email: string): Promise<Record<string, any> | null> {
+  const { data, error } = await supabase
+    .from('user_profiles')
+    .select('data')
+    .eq('id', email.toLowerCase())
+    .maybeSingle()
+  if (error || !data) return null
+  return data.data as Record<string, any>
+}
+
+/**
+ * Sauvegarde le profil utilisateur dans Supabase.
+ */
+export async function saveUserProfile(email: string, profile: object): Promise<void> {
+  const { error } = await supabase
+    .from('user_profiles')
+    .upsert({ id: email.toLowerCase(), data: profile, updated_at: new Date().toISOString() })
+  if (error) console.error('[storage] saveUserProfile:', error.message)
+}

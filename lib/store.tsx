@@ -1,7 +1,7 @@
 'use client'
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from 'react'
 import { Session, Participant, Formateur, ImpactEntry, ImpactPeriode, sessionsData, participantsData, formateursData, impactSeedData } from './data'
-import { loadRecords, upsertAll, deleteRecord, loadImpact, saveImpact } from './storage'
+import { loadRecords, upsertAll, deleteRecord, loadImpact, saveImpact, loadUserProfile, saveUserProfile } from './storage'
 import { fileSave, fileDelete } from './filestore'
 
 export interface Document {
@@ -27,7 +27,7 @@ interface CRMState {
   user: User | null
   login: (email: string, password: string) => boolean
   logout: () => void
-  updateUser: (u: Partial<User>) => void
+  updateUser: (u: Partial<User>) => Promise<void>
 
   sessions: Session[]
   participants: Participant[]
@@ -95,6 +95,10 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     nextIdRef.current = Math.max(nextIdRef.current + 1, Date.now())
     return id
   }
+
+  // Ref pour accéder à l'utilisateur courant dans les callbacks async
+  const userRef = useRef<User | null>(null)
+  useEffect(() => { userRef.current = user }, [user])
 
   // ── Chargement initial depuis Supabase ──────────────────────────────────────
   useEffect(() => {
@@ -166,14 +170,44 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   // ── Auth ────────────────────────────────────────────────────────────────────
   const login = useCallback((email: string, password: string) => {
     const found = authUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password)
-    if (found) { setUser({ email: found.email, name: found.name, nom: found.nom }); return true }
+    if (found) {
+      const baseUser = { email: found.email, name: found.name, nom: found.nom }
+      setUser(baseUser)
+      // Charger le profil persisté (photo etc.) en arrière-plan
+      loadUserProfile(found.email).then(profile => {
+        if (profile) {
+          setUser(prev => prev ? { ...prev, ...profile } : prev)
+        }
+      }).catch(err => console.warn('[store] loadUserProfile failed:', err))
+      return true
+    }
     return false
   }, [])
 
   const logout = useCallback(() => { setUser(null); setActiveView('dashboard') }, [])
-  const updateUser = useCallback((u: Partial<User>) => {
-    setUser(prev => prev ? { ...prev, ...u } : prev)
-  }, [])
+
+  // updateUser est async : upload photo si base64, puis persiste dans Supabase
+  const updateUser = useCallback(async (u: Partial<User>) => {
+    const currentUser = userRef.current
+    if (!currentUser) return
+
+    let finalUpdates = { ...u }
+
+    if (u.photo && isBase64(u.photo)) {
+      // Afficher la base64 immédiatement pour un aperçu instantané
+      setUser(prev => prev ? { ...prev, photo: u.photo } : prev)
+      // Upload vers Supabase Storage, puis remplacer par l'URL permanente
+      const key = `user_photo_${currentUser.email.replace(/[@.]/g, '_')}`
+      const url = await fileSave(key, u.photo)
+      if (url) finalUpdates = { ...finalUpdates, photo: url }
+    }
+
+    const next = { ...currentUser, ...finalUpdates }
+    setUser(next)
+    saveUserProfile(currentUser.email, next).catch(err =>
+      console.warn('[store] saveUserProfile failed:', err)
+    )
+  }, []) // userRef est stable, pas de dépendance nécessaire
 
   // ── Sessions ────────────────────────────────────────────────────────────────
   const addSession = useCallback((s: Omit<Session, 'id'>) => {

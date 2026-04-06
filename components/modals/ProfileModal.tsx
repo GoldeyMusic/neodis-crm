@@ -12,6 +12,8 @@ export default function ProfileModal({ open, onClose }: Props) {
   const [role, setRole] = useState('')
   const [mdp, setMdp] = useState('')
   const [mdp2, setMdp2] = useState('')
+  const [photoLoading, setPhotoLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
   const photoRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
@@ -24,19 +26,26 @@ export default function ProfileModal({ open, onClose }: Props) {
     }
   }, [open, user])
 
-  const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handlePhoto = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
     if (file.size > 2097152) { showToast('Photo trop lourde (max 2 MB)'); return }
+    setPhotoLoading(true)
     const reader = new FileReader()
-    reader.onload = ev => updateUser({ photo: ev.target?.result as string })
+    reader.onload = async ev => {
+      await updateUser({ photo: ev.target?.result as string })
+      setPhotoLoading(false)
+      showToast('Photo enregistrée')
+    }
     reader.readAsDataURL(file)
   }
 
-  const save = () => {
+  const save = async () => {
     if (!prenom || !nom) { showToast('Prénom et nom requis'); return }
     if (mdp && mdp !== mdp2) { showToast('Les mots de passe ne correspondent pas'); return }
-    updateUser({ name: prenom, nom, email })
+    setSaving(true)
+    await updateUser({ name: prenom, nom, email })
+    setSaving(false)
     logActivity('✎', `Profil mis à jour — ${prenom} ${nom}`)
     showToast('Profil enregistré')
     onClose()
@@ -59,8 +68,11 @@ export default function ProfileModal({ open, onClose }: Props) {
               <div style={{ width: 68, height: 68, borderRadius: '50%', background: 'var(--text-primary)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20, fontFamily: 'DM Mono', overflow: 'hidden', border: '2px solid var(--border)' }}>
                 {user?.photo ? <img src={user.photo} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : initials}
               </div>
-              <button onClick={() => photoRef.current?.click()} style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+              <button onClick={() => !photoLoading && photoRef.current?.click()} style={{ position: 'absolute', bottom: -2, right: -2, width: 22, height: 22, borderRadius: '50%', background: 'var(--surface)', border: '1px solid var(--border)', cursor: photoLoading ? 'wait' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                {photoLoading
+                  ? <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ animation: 'spin .7s linear infinite' }}><circle cx="8" cy="8" r="6" strokeOpacity=".2"/><path d="M8 2a6 6 0 0 1 6 6"/></svg>
+                  : <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+                }
               </button>
               <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
             </div>
@@ -91,7 +103,9 @@ export default function ProfileModal({ open, onClose }: Props) {
           </button>
           <div style={{ display: 'flex', gap: 8 }}>
             <button className="btn" onClick={onClose}>Annuler</button>
-            <button className="btn btn-primary" onClick={save}>Enregistrer</button>
+            <button className="btn btn-primary" onClick={save} disabled={saving || photoLoading}>
+              {saving ? 'Enregistrement…' : 'Enregistrer'}
+            </button>
           </div>
         </div>
       </div>
