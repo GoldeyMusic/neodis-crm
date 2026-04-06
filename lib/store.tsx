@@ -134,38 +134,49 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Persistance automatique dans Supabase ──────────────────────────────────
-  // Guard filesLoaded : on ne sauvegarde qu'après le chargement initial
-  // (évite d'écraser les données Supabase avec le seed au démarrage)
+  // Guard persistReady (ref) : la persistance ne s'active qu'APRÈS le premier
+  // render avec les données Supabase chargées + un court délai de sécurité.
+  // Cela empêche les données seed d'écraser les vraies données Supabase
+  // à cause d'une race condition entre setFilesLoaded et les setState des données.
+  const persistReady = useRef(false)
 
   useEffect(() => {
-    if (!filesLoaded) return
+    if (filesLoaded && !persistReady.current) {
+      // Attendre que tous les setState de loadAll soient appliqués au DOM
+      const timer = setTimeout(() => { persistReady.current = true }, 200)
+      return () => clearTimeout(timer)
+    }
+  }, [filesLoaded])
+
+  useEffect(() => {
+    if (!persistReady.current) return
     upsertAll('sessions', sessions)
-  }, [sessions, filesLoaded])
+  }, [sessions])
 
   useEffect(() => {
-    if (!filesLoaded) return
+    if (!persistReady.current) return
     upsertAll('participants', participants)
-  }, [participants, filesLoaded])
+  }, [participants])
 
   useEffect(() => {
-    if (!filesLoaded) return
+    if (!persistReady.current) return
     upsertAll('formateurs', formateurs)
-  }, [formateurs, filesLoaded])
+  }, [formateurs])
 
   useEffect(() => {
-    if (!filesLoaded) return
+    if (!persistReady.current) return
     upsertAll('equipe', equipe)
-  }, [equipe, filesLoaded])
+  }, [equipe])
 
   useEffect(() => {
-    if (!filesLoaded) return
+    if (!persistReady.current) return
     upsertAll('documents', documents)
-  }, [documents, filesLoaded])
+  }, [documents])
 
   useEffect(() => {
-    if (!filesLoaded) return
+    if (!persistReady.current) return
     saveImpact(impact)
-  }, [impact, filesLoaded])
+  }, [impact])
 
   // ── Helpers UI ──────────────────────────────────────────────────────────────
   const showToast = useCallback((msg: string) => {

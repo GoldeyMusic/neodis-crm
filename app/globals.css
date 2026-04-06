@@ -304,7 +304,7 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 .mini-cal-header { text-align: center; font-size: 9px; font-weight: 500; color: var(--text-tertiary); font-family: 'DM Mono', monospace; padding: 4px 0; }
 .mini-cal-day { text-align: center; font-size: 11px; padding: 4px 0; border-radius: 4px; cursor: default; color: var(--text-secondary); }
 .mini-cal-day.outside { color: var(--border-strong); }
-.mini-cal-day.today { background: var(--text-primary); color: white; font-weight: 600; border-radius: 50%; }
+.mini-cal-day.today { background: var(--text-primary); color: white; font-weight: 600; border-radius: 50%; width: 24px; height: 24px; display: inline-flex; align-items: center; justify-content: center; margin: 0 auto; }
 .mini-cal-day.has-session { background: var(--ft-bg); color: var(--ft); font-weight: 500; cursor: pointer; }
 .mini-cal-day.has-session.today { background: var(--ft); color: white; }
 .mini-cal-nav { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
