@@ -10,6 +10,7 @@ export interface PortalDocument {
   date: string
   data: string
   formateur?: string
+  formateurId?: number
   uploadedBy?: 'admin' | 'formateur'
   matiere?: string | string[]   // tag(s) matière pour les supports pédago (Streaming, Branding, etc.)
 }
@@ -69,21 +70,17 @@ export async function loadPortalData(token: string): Promise<PortalData | null> 
   // Docs globaux partagés à tous les formateurs
   const GLOBAL_CATS = ['reglement', 'programme', 'charte', 'matrice', 'qcm_formatif']
 
-  console.log('[portal] Total docs in Supabase:', allDocs.length)
-  console.log('[portal] Doc categories found:', Array.from(new Set(allDocs.map((d: any) => d.cat))))
-  console.log('[portal] Global docs found:', allDocs.filter((d: any) => GLOBAL_CATS.includes(d.cat)).map((d: any) => `${d.cat}: ${d.nom}`))
-
-  // Log les docs pédago pour debug
-  const pedagoDocs = allDocs.filter((d: any) => d.cat === 'pedago')
-  console.log('[portal] Pedago docs in DB:', pedagoDocs.map((d: any) => ({ nom: d.nom, formateur: d.formateur, session: d.session, uploadedBy: d.uploadedBy })))
-  console.log('[portal] Current formateur nom:', JSON.stringify(formateur.nom))
-
+  const formateurPathPrefix = `formateur_${formateur.id}_`
   const documents: PortalDocument[] = allDocs.filter((d: any) => {
     // Documents globaux NEODIS → visibles par tous les formateurs
     if (GLOBAL_CATS.includes(d.cat)) return true
-    // Documents directement liés au formateur (par son nom)
-    if (d.formateur === formateur.nom) {
-      return FORMATEUR_CATS.includes(d.cat)
+    // Documents directement liés au formateur (par ID, par nom, ou par chemin du fichier)
+    const isFormateurDoc =
+      d.formateurId === formateur.id ||
+      d.formateur === formateur.nom ||
+      (d.data && typeof d.data === 'string' && d.data.includes(formateurPathPrefix))
+    if (isFormateurDoc && FORMATEUR_CATS.includes(d.cat)) {
+      return true
     }
     // Ressources pédagogiques des sessions du formateur
     if (d.session && d.cat === 'pedago') {
@@ -93,7 +90,6 @@ export async function loadPortalData(token: string): Promise<PortalData | null> 
     return false
   })
 
-  console.log('[portal] Filtered docs for formateur:', documents.length, '→', documents.map(d => `${d.cat}: ${d.nom}`))
 
   // Ajouter le CV stocké directement sur la fiche formateur (s'il existe et pas déjà dans les docs)
   if (formateur.cv) {

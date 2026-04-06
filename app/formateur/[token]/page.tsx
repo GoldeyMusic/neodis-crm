@@ -435,6 +435,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
         nom: file.name,
         cat,
         formateur: f.nom,
+        formateurId: f.id,
         taille: file.size < 1024*1024 ? Math.round(file.size/1024)+' KB' : (file.size/(1024*1024)).toFixed(1)+' MB',
         date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
         data: urlData.publicUrl,
