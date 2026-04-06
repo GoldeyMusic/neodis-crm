@@ -273,6 +273,8 @@ export const impactSeedData: ImpactEntry[] = [
 // ── AUTH USERS ──
 export const authUsers = [
   { email: 'admin@neodis.fr', password: 'neodis2025', name: 'Admin', nom: 'NEODIS' },
-  { email: 'm.nguyen@neodis.fr', password: 'neodis2025', name: 'Marie', nom: 'Nguyen' },
-  { email: 'p.lambert@neodis.fr', password: 'neodis2025', name: 'Pierre', nom: 'Lambert' },
+  { email: 'goldey@neodis-medias.fr', password: 'neodis2026', name: 'David', nom: 'BERDUGO' },
+  { email: 'abakan@neodis-medias.fr', password: 'neodis2026', name: 'David', nom: 'ABAKAN' },
+  { email: 'philip@neodis-medias.fr', password: 'neodis2026', name: 'Philip', nom: 'NESMES' },
+  { email: 'jennifer.galap@umani.town', password: 'neodis2026', name: 'Jennifer', nom: 'GALAP' },
 ]
