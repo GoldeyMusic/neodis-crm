@@ -11,6 +11,7 @@ export interface PortalDocument {
   data: string
   formateur?: string
   uploadedBy?: 'admin' | 'formateur'
+  matiere?: string   // tag matière pour les supports pédago (Streaming, Branding, etc.)
 }
 
 export interface PortalData {

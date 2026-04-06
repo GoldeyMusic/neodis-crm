@@ -373,18 +373,25 @@ function CalendrierTab({ data }: { data: PortalData }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════════
-   ONGLET DOCUMENTS — catégorisé, upload avec choix de type
+   ONGLET DOCUMENTS — catégorisé, drag & drop multi-fichiers, tags matière
    ══════════════════════════════════════════════════════════════════════════════ */
+const MATIERES = ['Streaming', 'Branding', 'Marketing musical', "Identité d'artiste", 'MAO', 'Droits', 'Écriture']
+
 function DocumentsTab({ data }: { data: PortalData }) {
   const { formateur: f, documents } = data
   const fileRef = useRef<HTMLInputElement>(null)
   const [uploading, setUploading] = useState(false)
+  const [uploadCount, setUploadCount] = useState(0)
+  const [uploadTotal, setUploadTotal] = useState(0)
   const [uploaded, setUploaded] = useState<PortalDocument[]>([])
-  const [uploadCat, setUploadCat] = useState<string>('factures_formateurs')
+  const [uploadCat, setUploadCat] = useState<string>('pedago')
+  const [uploadMatiere, setUploadMatiere] = useState<string>('')
+  const [dragging, setDragging] = useState(false)
+  const dragCounter = useRef(0)
 
   const UPLOAD_CATS = [
-    { id: 'factures_formateurs', label: 'Facture', icon: '🧾' },
     { id: 'pedago', label: 'Cours / Support pédago', icon: '📚' },
+    { id: 'factures_formateurs', label: 'Facture', icon: '🧾' },
     { id: 'cv', label: 'CV', icon: '📋' },
   ]
 
@@ -398,7 +405,6 @@ function DocumentsTab({ data }: { data: PortalData }) {
 
   const allDocs = [...documents, ...uploaded]
 
-  // Grouper par catégorie
   const grouped = useMemo(() => {
     const map = new Map<string, PortalDocument[]>()
     allDocs.forEach(d => {
@@ -409,60 +415,159 @@ function DocumentsTab({ data }: { data: PortalData }) {
     return map
   }, [allDocs])
 
-  const handleUpload = async (file: File) => {
-    if (file.size > 10 * 1024 * 1024) return
-    setUploading(true)
+  const uploadOneFile = async (file: File, cat: string, matiere: string): Promise<PortalDocument | null> => {
+    if (file.size > 10 * 1024 * 1024) return null
     try {
       const ext = file.name.split('.').pop() || 'pdf'
-      const path = `formateur_${f.id}_${uploadCat}_${Date.now()}.${ext}`
+      const path = `formateur_${f.id}_${cat}_${Date.now()}_${Math.random().toString(36).slice(2, 6)}.${ext}`
       const { error } = await supabase.storage.from('neodis-files').upload(path, file, { upsert: true })
-      if (!error) {
-        const { data: urlData } = supabase.storage.from('neodis-files').getPublicUrl(path)
-        const doc: PortalDocument = {
-          id: Date.now(),
-          nom: file.name,
-          cat: uploadCat,
-          formateur: f.nom,
-          taille: file.size < 1024*1024 ? Math.round(file.size/1024)+' KB' : (file.size/(1024*1024)).toFixed(1)+' MB',
-          date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
-          data: urlData.publicUrl,
-          uploadedBy: 'formateur',
-        }
-        await supabase.from('documents').upsert({ id: String(doc.id), data: doc, updated_at: new Date().toISOString() })
-        setUploaded(prev => [...prev, doc])
+      if (error) return null
+      const { data: urlData } = supabase.storage.from('neodis-files').getPublicUrl(path)
+      const doc: PortalDocument = {
+        id: Date.now() + Math.floor(Math.random() * 10000),
+        nom: file.name,
+        cat,
+        formateur: f.nom,
+        taille: file.size < 1024*1024 ? Math.round(file.size/1024)+' KB' : (file.size/(1024*1024)).toFixed(1)+' MB',
+        date: new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+        data: urlData.publicUrl,
+        uploadedBy: 'formateur',
+        matiere: cat === 'pedago' && matiere ? matiere : undefined,
       }
+      await supabase.from('documents').upsert({ id: String(doc.id), data: doc, updated_at: new Date().toISOString() })
+      return doc
     } catch (e) {
       console.error('[portal] upload error:', e)
+      return null
     }
+  }
+
+  const handleFiles = async (files: File[]) => {
+    if (files.length === 0) return
+    setUploading(true)
+    setUploadCount(0)
+    setUploadTotal(files.length)
+    const results: PortalDocument[] = []
+    for (const file of files) {
+      const doc = await uploadOneFile(file, uploadCat, uploadMatiere)
+      if (doc) results.push(doc)
+      setUploadCount(prev => prev + 1)
+    }
+    setUploaded(prev => [...prev, ...results])
     setUploading(false)
   }
+
+  const onDragEnter = (e: React.DragEvent) => { e.preventDefault(); dragCounter.current++; setDragging(true) }
+  const onDragLeave = (e: React.DragEvent) => { e.preventDefault(); dragCounter.current--; if (dragCounter.current === 0) setDragging(false) }
+  const onDragOver = (e: React.DragEvent) => { e.preventDefault() }
+  const onDrop = (e: React.DragEvent) => {
+    e.preventDefault(); dragCounter.current = 0; setDragging(false)
+    const files = Array.from(e.dataTransfer.files)
+    if (files.length > 0) handleFiles(files)
+  }
+
+  const chipStyle = (active: boolean) => ({
+    padding: '4px 10px', borderRadius: 14, fontSize: 11, fontWeight: 500, cursor: 'pointer',
+    whiteSpace: 'nowrap' as const, fontFamily: 'DM Sans, sans-serif', border: '1px solid',
+    borderColor: active ? 'var(--text-primary)' : 'var(--border)',
+    background: active ? 'var(--text-primary)' : 'var(--surface)',
+    color: active ? 'white' : 'var(--text-secondary)',
+    transition: 'all .12s',
+  })
 
   return (
     <div>
       <div className="portal-section-title">Mes documents</div>
 
-      {/* Upload zone */}
+      {/* Zone d'upload — drag & drop */}
       <div className="portal-card" style={{ marginBottom: 20, padding: '16px 18px' }}>
-        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 10 }}>Déposer un document</div>
-        <div style={{ display: 'flex', gap: 6, marginBottom: 12, flexWrap: 'wrap' }}>
+        <div style={{ fontSize: 13, fontWeight: 500, marginBottom: 10 }}>Déposer des documents</div>
+
+        {/* Choix de catégorie */}
+        <div style={{ display: 'flex', gap: 6, marginBottom: 10, flexWrap: 'wrap' }}>
           {UPLOAD_CATS.map(c => (
-            <button key={c.id} onClick={() => setUploadCat(c.id)} style={{
-              padding: '5px 12px', borderRadius: 16, fontSize: 11, fontWeight: 500, cursor: 'pointer',
-              fontFamily: 'DM Sans, sans-serif', border: '1px solid', transition: 'all .12s',
-              borderColor: uploadCat === c.id ? 'var(--text-primary)' : 'var(--border)',
-              background: uploadCat === c.id ? 'var(--text-primary)' : 'var(--surface)',
-              color: uploadCat === c.id ? 'white' : 'var(--text-secondary)',
-            }}>
+            <button key={c.id} onClick={() => setUploadCat(c.id)} style={chipStyle(uploadCat === c.id)}>
               {c.icon} {c.label}
             </button>
           ))}
         </div>
-        <button className="btn btn-sm btn-primary" onClick={() => fileRef.current?.click()} disabled={uploading}>
-          {uploading ? 'Upload en cours…' : `↑ Choisir un fichier (${UPLOAD_CATS.find(c => c.id === uploadCat)?.label})`}
-        </button>
-        <input ref={fileRef} type="file" accept=".pdf,.doc,.docx,.jpg,.png" style={{ display: 'none' }}
-          onChange={e => { const file = e.target.files?.[0]; if (file) handleUpload(file); e.target.value = '' }} />
+
+        {/* Tags matière — uniquement pour pédago */}
+        {uploadCat === 'pedago' && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginBottom: 6 }}>Matière :</div>
+            <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap' }}>
+              {[...MATIERES, ...f.spec.filter(s => !MATIERES.includes(s))].map(m => (
+                <button key={m} onClick={() => setUploadMatiere(uploadMatiere === m ? '' : m)} style={{
+                  padding: '3px 9px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: 'DM Sans, sans-serif', border: '1px solid', transition: 'all .12s',
+                  borderColor: uploadMatiere === m ? '#2563EB' : 'var(--border)',
+                  background: uploadMatiere === m ? '#EFF6FF' : 'var(--surface)',
+                  color: uploadMatiere === m ? '#2563EB' : 'var(--text-tertiary)',
+                }}>
+                  {m}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Drop zone */}
+        <div
+          onDragEnter={onDragEnter}
+          onDragLeave={onDragLeave}
+          onDragOver={onDragOver}
+          onDrop={onDrop}
+          onClick={() => !uploading && fileRef.current?.click()}
+          style={{
+            border: `2px dashed ${dragging ? '#2563EB' : 'var(--border)'}`,
+            borderRadius: 'var(--radius)',
+            padding: uploading ? '16px' : '24px',
+            textAlign: 'center',
+            cursor: uploading ? 'default' : 'pointer',
+            transition: 'all .15s',
+            background: dragging ? '#EFF6FF' : 'var(--bg)',
+          }}
+        >
+          {uploading ? (
+            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+              <div className="portal-spinner" style={{ width: 20, height: 20, margin: '0 auto 8px' }} />
+              Upload {uploadCount}/{uploadTotal}…
+            </div>
+          ) : (
+            <>
+              <div style={{ fontSize: 22, marginBottom: 6 }}>📎</div>
+              <div style={{ fontSize: 13, color: dragging ? '#2563EB' : 'var(--text-secondary)', fontWeight: 500 }}>
+                {dragging ? 'Lâcher pour déposer' : 'Glisser-déposer vos fichiers ici'}
+              </div>
+              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                ou cliquer pour parcourir · PDF, DOC, images · max 10 MB/fichier
+              </div>
+            </>
+          )}
+        </div>
+        <input
+          ref={fileRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.jpg,.jpeg,.png,.ppt,.pptx"
+          multiple
+          style={{ display: 'none' }}
+          onChange={e => {
+            const files = Array.from(e.target.files || [])
+            if (files.length > 0) handleFiles(files)
+            e.target.value = ''
+          }}
+        />
       </div>
+
+      {/* Compteur uploads de la session */}
+      {uploaded.length > 0 && (
+        <div className="portal-card" style={{ background: '#F0FDF4', borderColor: '#BBF7D0', marginBottom: 16, padding: '10px 16px' }}>
+          <div style={{ fontSize: 12, color: '#16A34A', fontWeight: 500 }}>
+            ✓ {uploaded.length} document{uploaded.length > 1 ? 's' : ''} déposé{uploaded.length > 1 ? 's' : ''}
+          </div>
+        </div>
+      )}
 
       {/* Documents par catégorie */}
       {allDocs.length === 0 && (
@@ -482,9 +587,14 @@ function DocumentsTab({ data }: { data: PortalData }) {
                 <div key={d.id} className="portal-card" style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: '10px 14px' }}>
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.nom}</div>
-                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2 }}>
-                      {d.taille} · {d.date}
-                      {d.uploadedBy === 'formateur' && <span style={{ marginLeft: 6, padding: '0 5px', borderRadius: 6, background: '#F0FDF4', color: '#16A34A', fontSize: 10, border: '1px solid #BBF7D0' }}>Déposé par moi</span>}
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, display: 'flex', alignItems: 'center', gap: 4, flexWrap: 'wrap' }}>
+                      {d.taille}{d.date ? ` · ${d.date}` : ''}
+                      {d.matiere && (
+                        <span style={{ padding: '0 6px', borderRadius: 8, background: '#EFF6FF', color: '#2563EB', fontSize: 10, border: '1px solid #BFDBFE' }}>{d.matiere}</span>
+                      )}
+                      {d.uploadedBy === 'formateur' && (
+                        <span style={{ padding: '0 5px', borderRadius: 6, background: '#F0FDF4', color: '#16A34A', fontSize: 10, border: '1px solid #BBF7D0' }}>Déposé par moi</span>
+                      )}
                     </div>
                   </div>
                   <a href={d.data} target="_blank" rel="noopener" className="btn btn-sm" download={d.nom}>
