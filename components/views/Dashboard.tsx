@@ -1,12 +1,74 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useCRM } from '@/lib/store'
 import { Session } from '@/lib/data'
 import SessionModal from '../modals/SessionModal'
 
+/* ── Mini-calendrier helpers ── */
+const MOIS_FR_SHORT = ['Janv.','Févr.','Mars','Avr.','Mai','Juin','Juil.','Août','Sept.','Oct.','Nov.','Déc.']
+const JOURS_MINI = ['L','M','M','J','V','S','D']
+
+function parseDateFR(str: string): Date | null {
+  const s = str.trim().toLowerCase()
+  const match = s.match(/(\d{1,2})\s+(\S+?)\.?\s+(\d{4})/)
+  if (!match) return null
+  const day = parseInt(match[1])
+  const monthStr = match[2].replace('.', '')
+  const year = parseInt(match[3])
+  const abbrevs = ['janv','févr','mars','avr','mai','juin','juil','août','sept','oct','nov','déc']
+  const full = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre']
+  let idx = abbrevs.findIndex(m => monthStr.startsWith(m))
+  if (idx === -1) idx = full.findIndex(m => monthStr.startsWith(m))
+  if (idx === -1) return null
+  return new Date(year, idx, day)
+}
+
+function parseDateRange(dates: string): [Date, Date] | null {
+  const parts = dates.split(/\s*[—–-]\s*/)
+  if (parts.length < 2) return null
+  const end = parseDateFR(parts[1].trim())
+  if (!end) return null
+  let startStr = parts[0].trim()
+  if (!/\d{4}/.test(startStr)) startStr += ` ${end.getFullYear()}`
+  const start = parseDateFR(startStr)
+  if (!start) return null
+  return [start, end]
+}
+
+function getMiniCalDays(year: number, month: number) {
+  const first = new Date(year, month, 1)
+  const last = new Date(year, month + 1, 0)
+  let offset = (first.getDay() + 6) % 7
+  const days: { date: Date; inMonth: boolean }[] = []
+  for (let i = offset - 1; i >= 0; i--) days.push({ date: new Date(year, month, -i), inMonth: false })
+  for (let d = 1; d <= last.getDate(); d++) days.push({ date: new Date(year, month, d), inMonth: true })
+  while (days.length % 7 !== 0) days.push({ date: new Date(year, month + 1, days.length - offset - last.getDate() + 1), inMonth: false })
+  return days
+}
+
+function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate() }
+function isInRange(day: Date, s: Date, e: Date) {
+  const d = day.getTime(), s0 = new Date(s.getFullYear(), s.getMonth(), s.getDate()).getTime(), e0 = new Date(e.getFullYear(), e.getMonth(), e.getDate()).getTime()
+  return d >= s0 && d <= e0
+}
+
 export default function Dashboard() {
   const { sessions, participants, formateurs, documents, setActiveView } = useCRM()
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
+
+  // Mini-calendrier state
+  const today = new Date()
+  const [miniMonth, setMiniMonth] = useState(today.getMonth())
+  const [miniYear, setMiniYear] = useState(today.getFullYear())
+
+  const sessionRanges = useMemo(() => {
+    return sessions.map(s => ({ session: s, range: parseDateRange(s.dates) })).filter(sr => sr.range !== null) as { session: Session; range: [Date, Date] }[]
+  }, [sessions])
+
+  const miniDays = useMemo(() => getMiniCalDays(miniYear, miniMonth), [miniYear, miniMonth])
+
+  const miniPrev = () => { if (miniMonth === 0) { setMiniMonth(11); setMiniYear(y => y - 1) } else setMiniMonth(m => m - 1) }
+  const miniNext = () => { if (miniMonth === 11) { setMiniMonth(0); setMiniYear(y => y + 1) } else setMiniMonth(m => m + 1) }
 
   const active = sessions.filter(s => s.status === 'active').length
   const total = participants.length
@@ -195,13 +257,49 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Alertes */}
+        {/* Mini-calendrier */}
         <div className="card animate-in">
           <div className="card-header">
-            <div className="card-title">Alertes checklist</div>
+            <div className="card-title">Calendrier</div>
+            <span className="card-action" onClick={() => setActiveView('calendrier')}>Voir le planning →</span>
           </div>
-          <div style={{ padding: '20px', fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center' }}>
-            ✓ Aucune alerte en cours
+          <div style={{ padding: '16px 20px' }}>
+            <div className="mini-cal-nav">
+              <button className="btn btn-sm" onClick={miniPrev} style={{ padding: '2px 6px' }}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M10 3l-5 5 5 5"/></svg>
+              </button>
+              <span className="mini-cal-label">{MOIS_FR_SHORT[miniMonth]} {miniYear}</span>
+              <button className="btn btn-sm" onClick={miniNext} style={{ padding: '2px 6px' }}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M6 3l5 5-5 5"/></svg>
+              </button>
+            </div>
+            <div className="mini-cal-grid">
+              {JOURS_MINI.map((j, i) => <div key={i} className="mini-cal-header">{j}</div>)}
+              {miniDays.map(({ date, inMonth }, i) => {
+                const isToday = isSameDay(date, today)
+                const hasSession = sessionRanges.some(({ range }) => isInRange(date, range[0], range[1]))
+                return (
+                  <div
+                    key={i}
+                    className={[
+                      'mini-cal-day',
+                      !inMonth && 'outside',
+                      isToday && 'today',
+                      hasSession && inMonth && 'has-session',
+                    ].filter(Boolean).join(' ')}
+                    onClick={hasSession && inMonth ? () => setActiveView('calendrier') : undefined}
+                  >
+                    {date.getDate()}
+                  </div>
+                )
+              })}
+            </div>
+            {sessionRanges.filter(({ range }) => {
+              const ms = new Date(miniYear, miniMonth, 1), me = new Date(miniYear, miniMonth + 1, 0)
+              return range[0] <= me && range[1] >= ms
+            }).length === 0 && (
+              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--text-tertiary)', textAlign: 'center' }}>Aucune session ce mois</div>
+            )}
           </div>
         </div>
       </div>

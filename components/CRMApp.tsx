@@ -16,6 +16,7 @@ import Equipe from './views/Equipe'
 import Documents from './views/Documents'
 import Admin from './views/Admin'
 import Impact from './views/Impact'
+import Calendrier from './views/Calendrier'
 
 const INACTIVITY_LIMIT = 60 * 60 * 1000 // 1h
 const WARNING_BEFORE = 2 * 60 * 1000 // 2min
@@ -64,6 +65,7 @@ export default function CRMApp() {
         <main className="main-content">
           <div style={{ display: v === 'dashboard'    ? undefined : 'none' }}><Dashboard /></div>
           <div style={{ display: v === 'sessions'     ? undefined : 'none' }}><Sessions /></div>
+          <div style={{ display: v === 'calendrier'   ? undefined : 'none' }}><Calendrier /></div>
           <div style={{ display: v === 'participants' ? undefined : 'none' }}><Participants /></div>
           <div style={{ display: v === 'formateurs'   ? undefined : 'none' }}><Formateurs /></div>
           <div style={{ display: v === 'equipe'       ? undefined : 'none' }}><Equipe /></div>
