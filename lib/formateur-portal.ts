@@ -79,5 +79,21 @@ export async function loadPortalData(token: string): Promise<PortalData | null> 
     return false
   })
 
+  // Ajouter le CV stocké directement sur la fiche formateur (s'il existe et pas déjà dans les docs)
+  if (formateur.cv) {
+    const alreadyHasCV = documents.some(d => d.cat === 'cv' && d.nom === formateur.cv!.name)
+    if (!alreadyHasCV) {
+      documents.unshift({
+        id: -1,
+        nom: formateur.cv.name,
+        cat: 'cv',
+        taille: formateur.cv.size,
+        date: '',
+        data: formateur.cv.data,
+        formateur: formateur.nom,
+      })
+    }
+  }
+
   return { formateur, sessions, documents }
 }
