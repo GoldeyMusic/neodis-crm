@@ -559,15 +559,14 @@ function BudgetTab({ session }: { session: Session }) {
 
   const COL = '1fr 60px 70px 80px 90px'
 
-  const togglePaiement = (formateurId: number) => {
+  const setPaiement = (formateurId: number, paye: boolean, dateStr?: string) => {
     if (!session.planning) return
     const updated = session.planning.map(p => {
       if (p.formateurId !== formateurId) return p
-      const isPaye = p.paiement === 'paye'
       return {
         ...p,
-        paiement: isPaye ? 'en_attente' as const : 'paye' as const,
-        paiementDate: isPaye ? undefined : new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+        paiement: paye ? 'paye' as const : 'en_attente' as const,
+        paiementDate: paye ? (dateStr || new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })) : undefined,
       }
     })
     updateSession(session.id, { planning: updated })
@@ -605,19 +604,50 @@ function BudgetTab({ session }: { session: Session }) {
         <div style={{ textAlign: 'right', fontFamily: 'DM Mono', fontSize: 13, fontWeight: total !== null ? 600 : 400, color: total !== null ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
           {total !== null ? `${total.toLocaleString('fr-FR')} €` : '—'}
         </div>
-        <div style={{ textAlign: 'center' }}>
-          <button
-            onClick={() => togglePaiement(entry.formateurId)}
-            title={isPaye ? `Réglé${entry.paiementDate ? ' le ' + entry.paiementDate : ''} — cliquer pour annuler` : 'Marquer comme payé'}
-            style={{
-              padding: '3px 8px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
-              fontFamily: 'DM Sans, sans-serif', border: '1px solid', transition: 'all .12s',
-              background: isPaye ? '#F0FDF4' : '#FFF7ED',
-              color: isPaye ? '#16A34A' : '#C2410C',
-              borderColor: isPaye ? '#BBF7D0' : '#FED7AA',
-            }}>
-            {isPaye ? '✓ Payé' : 'En attente'}
-          </button>
+        <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3 }}>
+          {isPaye ? (
+            <>
+              <button
+                onClick={() => setPaiement(entry.formateurId, false)}
+                title="Annuler le paiement"
+                style={{
+                  padding: '3px 8px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: 'DM Sans, sans-serif', border: '1px solid #BBF7D0',
+                  background: '#F0FDF4', color: '#16A34A', transition: 'all .12s',
+                }}>
+                ✓ Payé
+              </button>
+              {entry.paiementDate && <div style={{ fontSize: 9, color: 'var(--text-tertiary)' }}>{entry.paiementDate}</div>}
+            </>
+          ) : (
+            <>
+              <input
+                type="date"
+                defaultValue={new Date().toISOString().slice(0, 10)}
+                style={{ fontSize: 10, padding: '2px 4px', border: '1px solid var(--border)', borderRadius: 6, fontFamily: 'DM Mono', width: 85, color: 'var(--text-secondary)' }}
+                onChange={e => {
+                  // Stocker la date choisie en attribut data pour la récupérer au clic
+                  (e.target as any).dataset.chosen = e.target.value
+                }}
+                data-formateur-id={entry.formateurId}
+              />
+              <button
+                onClick={(e) => {
+                  const input = (e.currentTarget.parentElement?.querySelector('input[type=date]') as HTMLInputElement)
+                  const isoDate = input?.value || new Date().toISOString().slice(0, 10)
+                  const [y, m, d] = isoDate.split('-')
+                  const dateFR = new Date(+y, +m - 1, +d).toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
+                  setPaiement(entry.formateurId, true, dateFR)
+                }}
+                style={{
+                  padding: '3px 8px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
+                  fontFamily: 'DM Sans, sans-serif', border: '1px solid #FED7AA',
+                  background: '#FFF7ED', color: '#C2410C', transition: 'all .12s',
+                }}>
+                Marquer payé
+              </button>
+            </>
+          )}
         </div>
       </div>
     )
