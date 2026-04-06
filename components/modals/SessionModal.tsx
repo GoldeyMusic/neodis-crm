@@ -557,7 +557,21 @@ function BudgetTab({ session }: { session: Session }) {
   const smc = subtotal(masterclass)
   const allTarifsSet = rows.every(r => r.tarif !== null)
 
-  const COL = '1fr 60px 70px 80px'
+  const COL = '1fr 60px 70px 80px 90px'
+
+  const togglePaiement = (formateurId: number) => {
+    if (!session.planning) return
+    const updated = session.planning.map(p => {
+      if (p.formateurId !== formateurId) return p
+      const isPaye = p.paiement === 'paye'
+      return {
+        ...p,
+        paiement: isPaye ? 'en_attente' as const : 'paye' as const,
+        paiementDate: isPaye ? undefined : new Date().toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' }),
+      }
+    })
+    updateSession(session.id, { planning: updated })
+  }
 
   const HeaderRow = () => (
     <div style={{ display: 'grid', gridTemplateColumns: COL, gap: 8, padding: '9px 16px', background: 'var(--surface-2)', borderBottom: '1px solid var(--border)', fontSize: 11, color: 'var(--text-tertiary)', fontWeight: 600, textTransform: 'uppercase' as const, letterSpacing: '0.04em' }}>
@@ -565,12 +579,14 @@ function BudgetTab({ session }: { session: Session }) {
       <div style={{ textAlign: 'center' }}>Heures</div>
       <div style={{ textAlign: 'center' }}>Tarif/h</div>
       <div style={{ textAlign: 'right' }}>Total</div>
+      <div style={{ textAlign: 'center' }}>Paiement</div>
     </div>
   )
 
   const DataRow = ({ formateur, entry, tarif, total }: typeof rows[0]) => {
     const initials = formateur ? formateur.nom.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase() : '?'
     const isManquant = tarif === null
+    const isPaye = entry.paiement === 'paye'
     return (
       <div style={{ display: 'grid', gridTemplateColumns: COL, gap: 8, padding: '12px 16px', borderBottom: '1px solid var(--border)', alignItems: 'center' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
@@ -589,6 +605,20 @@ function BudgetTab({ session }: { session: Session }) {
         <div style={{ textAlign: 'right', fontFamily: 'DM Mono', fontSize: 13, fontWeight: total !== null ? 600 : 400, color: total !== null ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
           {total !== null ? `${total.toLocaleString('fr-FR')} €` : '—'}
         </div>
+        <div style={{ textAlign: 'center' }}>
+          <button
+            onClick={() => togglePaiement(entry.formateurId)}
+            title={isPaye ? `Réglé${entry.paiementDate ? ' le ' + entry.paiementDate : ''} — cliquer pour annuler` : 'Marquer comme payé'}
+            style={{
+              padding: '3px 8px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
+              fontFamily: 'DM Sans, sans-serif', border: '1px solid', transition: 'all .12s',
+              background: isPaye ? '#F0FDF4' : '#FFF7ED',
+              color: isPaye ? '#16A34A' : '#C2410C',
+              borderColor: isPaye ? '#BBF7D0' : '#FED7AA',
+            }}>
+            {isPaye ? '✓ Payé' : 'En attente'}
+          </button>
+        </div>
       </div>
     )
   }
@@ -601,6 +631,7 @@ function BudgetTab({ session }: { session: Session }) {
       <div style={{ textAlign: 'right', fontFamily: 'DM Mono', fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
         {budget > 0 ? `${budget.toLocaleString('fr-FR')} €` : '—'}
       </div>
+      <div />
     </div>
   )
 

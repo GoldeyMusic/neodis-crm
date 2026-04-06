@@ -21,6 +21,8 @@ export interface PlanningEntry {
   formateurId: number
   heures: number
   module: string
+  paiement?: 'en_attente' | 'paye'   // suivi paiement formateur
+  paiementDate?: string               // date du règlement (ISO ou FR)
 }
 
 export interface Session {
