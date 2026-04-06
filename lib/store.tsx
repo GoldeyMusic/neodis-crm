@@ -125,8 +125,14 @@ export function CRMProvider({ children }: { children: ReactNode }) {
           // Migration : ajouter un token aux formateurs existants qui n'en ont pas
           const chars = 'abcdefghijkmnpqrstuvwxyz23456789'
           const mkToken = () => { let t = ''; for (let i = 0; i < 12; i++) t += chars[Math.floor(Math.random() * chars.length)]; return t }
+          const needsMigration = dbFormateurs.some(f => !f.token)
           const migrated = dbFormateurs.map(f => f.token ? f : { ...f, token: mkToken() })
           setFormateurs(migrated)
+          // Persister immédiatement si des tokens ont été générés
+          if (needsMigration) {
+            console.log('[store] Migrating formateur tokens → Supabase')
+            upsertAll('formateurs', migrated)
+          }
         }
         if (dbEquipe.length > 0) setEquipe(dbEquipe)
         if (dbDocuments.length > 0) setDocuments(dbDocuments)
