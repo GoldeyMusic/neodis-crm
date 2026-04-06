@@ -580,7 +580,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
       {allDocs.length === 0 && (
         <div className="portal-empty">Aucun document pour le moment</div>
       )}
-      {['contrat', 'factures_formateurs', 'pedago', 'cv'].map(cat => {
+      {['contrat', 'contrat_st', 'factures_formateurs', 'pedago', 'cv', 'reglement', 'programme', 'charte', 'matrice', 'qcm_formatif'].map(cat => {
         const docs = grouped.get(cat)
         if (!docs || docs.length === 0) return null
         return (
