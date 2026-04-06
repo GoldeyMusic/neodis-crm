@@ -43,142 +43,94 @@ function MembreCard({ m, isCurrentUser, currentUserPhoto }: {
   }
 
   return (
-    <div className="card" style={{ padding: 0, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
-      {/* Bandeau coloré */}
-      <div style={{ height: 6, background: 'var(--ft-bg, #f0f4ff)', borderBottom: '1px solid var(--border)' }} />
-
-      <div style={{ padding: '20px 20px 16px' }}>
-        {/* Avatar + nom */}
-        <div style={{ display: 'flex', alignItems: 'flex-start', gap: 14, marginBottom: 14 }}>
-          <div style={{ position: 'relative', flexShrink: 0 }}>
-            <div style={{
-              width: 60, height: 60, borderRadius: '50%',
-              background: 'var(--text-primary)', color: 'white',
+    <div className="form-card" style={{ cursor: 'default' }}>
+      {/* Avatar + nom + badges (même layout que FormateurCard) */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 10 }}>
+        <div style={{ position: 'relative', flexShrink: 0 }}>
+          <div className="f-avatar" style={{ margin: 0, flexShrink: 0, overflow: 'hidden' }}>
+            {displayPhoto
+              ? <img src={displayPhoto} alt={m.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              : initials}
+          </div>
+          <button
+            onClick={() => !uploading && photoRef.current?.click()}
+            title="Changer la photo"
+            style={{
+              position: 'absolute', bottom: -2, right: -2,
+              width: 18, height: 18, borderRadius: '50%',
+              background: 'var(--surface)', border: '1px solid var(--border)',
+              cursor: uploading ? 'wait' : 'pointer',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
-              fontSize: 18, fontFamily: 'DM Mono', overflow: 'hidden',
-              border: '2px solid var(--border)',
-            }}>
-              {displayPhoto
-                ? <img src={displayPhoto} alt={m.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                : initials}
-            </div>
-            {/* Bouton photo */}
-            <button
-              onClick={() => !uploading && photoRef.current?.click()}
-              title="Changer la photo"
-              style={{
-                position: 'absolute', bottom: -2, right: -2,
-                width: 22, height: 22, borderRadius: '50%',
-                background: 'var(--surface)', border: '1px solid var(--border)',
-                cursor: uploading ? 'wait' : 'pointer',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                boxShadow: 'var(--shadow)',
-              }}
-            >
-              {uploading
-                ? <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ animation: 'spin .7s linear infinite' }}><circle cx="8" cy="8" r="6" strokeOpacity=".2"/><path d="M8 2a6 6 0 0 1 6 6"/></svg>
-                : <svg width="10" height="10" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
-              }
-            </button>
-            <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
+              boxShadow: 'var(--shadow)',
+            }}
+          >
+            {uploading
+              ? <svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ animation: 'spin .7s linear infinite' }}><circle cx="8" cy="8" r="6" strokeOpacity=".2"/><path d="M8 2a6 6 0 0 1 6 6"/></svg>
+              : <svg width="8" height="8" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
+            }
+          </button>
+          <input ref={photoRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handlePhoto} />
+        </div>
+        <div style={{ minWidth: 0 }}>
+          <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+            {m.prenom} {m.nom}
           </div>
-
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontWeight: 600, fontSize: 15, color: 'var(--text-primary)', lineHeight: 1.2 }}>
-              {m.prenom} <span style={{ fontFamily: 'DM Mono', fontSize: 13 }}>{m.nom}</span>
-            </div>
-
-            {/* Badges */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 6 }}>
-              {m.linkedEmail && (
-                <span style={{
-                  fontSize: 10, fontWeight: 500, padding: '2px 7px', borderRadius: 99,
-                  background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE',
-                  fontFamily: 'DM Mono',
-                }}>
-                  Compte CRM
-                </span>
-              )}
-              {isCurrentUser && (
-                <span style={{
-                  fontSize: 10, fontWeight: 500, padding: '2px 7px', borderRadius: 99,
-                  background: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0',
-                  fontFamily: 'DM Mono',
-                }}>
-                  Vous
-                </span>
-              )}
-            </div>
+          <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
+            {m.linkedEmail && (
+              <span className="tag" style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', fontSize: 10 }}>Compte CRM</span>
+            )}
+            {isCurrentUser && (
+              <span className="tag tag-verified" style={{ fontSize: 10 }}>Vous</span>
+            )}
           </div>
+        </div>
+      </div>
 
-          {/* Bouton éditer */}
-          {!editing && (
+      {/* Rôle (comme les spécialités des formateurs) */}
+      {editing ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div className="form-group">
+            <label className="form-label">Rôle / Poste</label>
+            <input className="form-input" value={role} onChange={e => setRole(e.target.value)} placeholder="ex. Directeur artistique" />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Email</label>
+            <input type="email" className="form-input" value={email} onChange={e => setEmail(e.target.value)} />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Téléphone</label>
+            <input type="tel" className="form-input" value={tel} onChange={e => setTel(e.target.value)} placeholder="+33 6 …" />
+          </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+            <button className="btn btn-sm" onClick={() => setEditing(false)}>Annuler</button>
+            <button className="btn btn-sm btn-primary" onClick={saveEdits}>Enregistrer</button>
+          </div>
+        </div>
+      ) : (
+        <>
+          {m.role ? (
+            <div style={{ marginBottom: 10 }}>
+              <span style={{ fontSize: 11, padding: '2px 7px', borderRadius: 10, background: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>{m.role}</span>
+            </div>
+          ) : (
+            <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic', marginBottom: 10 }}>Rôle non renseigné</div>
+          )}
+
+          {/* Contact (même style que les formateurs) */}
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{m.email || 'Email non renseigné'}</div>
+          <div style={{ fontSize: 12, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{m.tel || '—'}</div>
+
+          <div style={{ marginTop: 10 }}>
             <button
               className="btn btn-sm"
               onClick={() => { setRole(m.role); setEmail(m.email); setTel(m.tel); setEditing(true) }}
-              style={{ flexShrink: 0 }}
             >
               <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
               Modifier
             </button>
-          )}
-        </div>
-
-        {/* Infos / formulaire */}
-        {editing ? (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <div className="form-group">
-              <label className="form-label">Rôle / Poste</label>
-              <input className="form-input" value={role} onChange={e => setRole(e.target.value)} placeholder="ex. Directeur artistique" />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Email</label>
-              <input type="email" className="form-input" value={email} onChange={e => setEmail(e.target.value)} />
-            </div>
-            <div className="form-group">
-              <label className="form-label">Téléphone</label>
-              <input type="tel" className="form-input" value={tel} onChange={e => setTel(e.target.value)} placeholder="+33 6 …" />
-            </div>
-            <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
-              <button className="btn" onClick={() => setEditing(false)}>Annuler</button>
-              <button className="btn btn-primary" onClick={saveEdits}>Enregistrer</button>
-            </div>
           </div>
-        ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {/* Rôle */}
-            <div style={{ fontSize: 13, color: m.role ? 'var(--text-secondary)' : 'var(--text-tertiary)', fontStyle: m.role ? 'normal' : 'italic' }}>
-              {m.role || 'Rôle non renseigné'}
-            </div>
-
-            {/* Contacts */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginTop: 2 }}>
-              {m.email ? (
-                <a href={`mailto:${m.email}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="3" width="14" height="10" rx="2"/><path d="M1 6l7 4 7-4"/></svg>
-                  {m.email}
-                </a>
-              ) : (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="3" width="14" height="10" rx="2"/><path d="M1 6l7 4 7-4"/></svg>
-                  Email non renseigné
-                </span>
-              )}
-              {m.tel ? (
-                <a href={`tel:${m.tel}`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-secondary)', textDecoration: 'none' }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2a1 1 0 0 1 1-1h2l1 3-1.5 1.5a10 10 0 0 0 4 4L11 8l3 1v2a1 1 0 0 1-1 1A13 13 0 0 1 2 3a1 1 0 0 1 1-1z"/></svg>
-                  {m.tel}
-                </a>
-              ) : (
-                <span style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: 'var(--text-tertiary)', fontStyle: 'italic' }}>
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 2a1 1 0 0 1 1-1h2l1 3-1.5 1.5a10 10 0 0 0 4 4L11 8l3 1v2a1 1 0 0 1-1 1A13 13 0 0 1 2 3a1 1 0 0 1 1-1z"/></svg>
-                  Téléphone non renseigné
-                </span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+        </>
+      )}
     </div>
   )
 }
@@ -188,21 +140,17 @@ export default function Equipe() {
   const { equipe, user } = useCRM()
 
   return (
-    <div className="view-container">
-      {/* En-tête */}
-      <div className="view-header" style={{ marginBottom: 24 }}>
+    <div>
+      {/* En-tête (même style que Formateurs) */}
+      <div className="page-header animate-in">
         <div>
-          <div className="view-title">Équipe UMANI</div>
-          <div className="view-subtitle">{equipe.length} membre{equipe.length > 1 ? 's' : ''}</div>
+          <div className="page-title">Équipe UMANI</div>
+          <div className="page-subtitle">{equipe.length} membre{equipe.length > 1 ? 's' : ''}</div>
         </div>
       </div>
 
-      {/* Grille de cartes */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-        gap: 16,
-      }}>
+      {/* Grille de cartes (même classe que formateur-grid) */}
+      <div className="formateur-grid animate-in">
         {equipe.map(m => (
           <MembreCard
             key={m.id}
