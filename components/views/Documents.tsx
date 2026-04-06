@@ -1120,7 +1120,10 @@ function EditDocModal({ doc, onClose, onSave }: { doc: Document; onClose: () => 
             <div className="form-group">
               <label className="form-label">Catégorie</label>
               <select className="form-input" value={cat} onChange={e => setCat(e.target.value)}>
-                {Object.entries({ factures_financeurs: 'Factures financeurs', factures_formateurs: 'Factures formateurs', presence: 'Feuilles de présence', bilans: 'Bilans', cv: 'CV Formateurs', pedago: 'Ressources pédago' }).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                {Object.entries(catLabels).filter(([k]) => !ADMIN_FORMATEUR_CATS.includes(k)).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                <optgroup label="Admin formateurs">
+                  {ADMIN_FORMATEUR_CATS.map(k => <option key={k} value={k}>{catLabels[k]}</option>)}
+                </optgroup>
               </select>
             </div>
           </div>
