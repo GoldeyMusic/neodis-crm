@@ -65,9 +65,13 @@ export async function loadPortalData(token: string): Promise<PortalData | null> 
   const allDocs = (dRows ?? []).map(r => r.data as any)
 
   const sessionNames = new Set(sessions.map(s => s.session.name))
-  const FORMATEUR_CATS = ['factures_formateurs', 'cv', 'pedago', 'contrat']
+  const FORMATEUR_CATS = ['factures_formateurs', 'cv', 'pedago', 'contrat', 'contrat_st']
+  // Docs globaux partagés à tous les formateurs
+  const GLOBAL_CATS = ['reglement', 'programme', 'charte', 'matrice', 'qcm_formatif']
 
   const documents: PortalDocument[] = allDocs.filter((d: any) => {
+    // Documents globaux NEODIS → visibles par tous les formateurs
+    if (GLOBAL_CATS.includes(d.cat)) return true
     // Documents directement liés au formateur (par son nom)
     if (d.formateur === formateur.nom) {
       return FORMATEUR_CATS.includes(d.cat)

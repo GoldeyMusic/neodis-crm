@@ -459,6 +459,12 @@ const catLabels: Record<string, string> = {
   bilans: 'Bilans',
   cv: 'CV Formateurs',
   pedago: 'Ressources pédago',
+  contrat_st: 'Contrats sous-traitance',
+  reglement: 'Règlement intérieur',
+  programme: 'Programme détaillé',
+  charte: 'Charte qualité',
+  matrice: 'Matrice progression',
+  qcm_formatif: 'QCM formatifs',
 }
 
 const catColors: Record<string, { bg: string; color: string; border: string }> = {
@@ -470,12 +476,20 @@ const catColors: Record<string, { bg: string; color: string; border: string }> =
   bilans:              { bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
   cv:                  { bg: 'var(--ft-bg)', color: 'var(--ft)', border: 'var(--ft-border)' },
   pedago:              { bg: 'var(--surface-2)', color: 'var(--text-tertiary)', border: 'var(--border)' },
+  contrat_st:          { bg: '#FEF3C7', color: '#92400E', border: '#FCD34D' },
+  reglement:           { bg: '#EDE9FE', color: '#6D28D9', border: '#C4B5FD' },
+  programme:           { bg: '#ECFDF5', color: '#065F46', border: '#A7F3D0' },
+  charte:              { bg: '#FFF1F2', color: '#9F1239', border: '#FECDD3' },
+  matrice:             { bg: '#F0F9FF', color: '#0369A1', border: '#BAE6FD' },
+  qcm_formatif:        { bg: '#FEF9C3', color: '#854D0E', border: '#FDE68A' },
 }
 
 const catIcon: Record<string, string> = {
   factures_financeurs: '🧾', factures_formateurs: '🧾',
   avis_paiement: '💳', frais_admin: '🗂️',
   presence: '📋', bilans: '📊', cv: '📄', pedago: '📄',
+  contrat_st: '📝', reglement: '📜', programme: '📑',
+  charte: '✅', matrice: '📊', qcm_formatif: '📝',
 }
 
 export default function Documents() {
@@ -490,6 +504,7 @@ export default function Documents() {
   const [uploadCat, setUploadCat] = useState('')
   const [uploadNom, setUploadNom] = useState('')
   const [uploadSession, setUploadSession] = useState('')
+  const [uploadFormateur, setUploadFormateur] = useState('')
   const [factureItems, setFactureItems] = useState<FactureItem[] | null>(null)
   const [formateurFactureItems, setFormateurFactureItems] = useState<FactureFormateurItem[] | null>(null)
   const [avisItems, setAvisItems] = useState<AvisItem[] | null>(null)
@@ -556,18 +571,20 @@ export default function Documents() {
 
   const confirmUpload = () => {
     if (!pendingFile || !uploadCat) { showToast('Sélectionne une catégorie'); return }
+    if (uploadCat === 'contrat_st' && !uploadFormateur) { showToast('Sélectionne un formateur pour le contrat'); return }
     const now = new Date()
     const date = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
     addDocument({
       nom: uploadNom || pendingFile.name,
       cat: uploadCat,
       session: uploadSession || undefined,
+      formateur: uploadCat === 'contrat_st' ? uploadFormateur : undefined,
       taille: pendingFile.size,
       date,
       data: pendingFile.data,
     })
     showToast(`"${uploadNom || pendingFile.name}" uploadé`)
-    setPendingFile(null); setUploadCat(''); setUploadNom(''); setUploadSession(''); setUploadOpen(false)
+    setPendingFile(null); setUploadCat(''); setUploadNom(''); setUploadSession(''); setUploadFormateur(''); setUploadOpen(false)
   }
 
   const downloadDoc = (data: string, name: string) => {
@@ -787,7 +804,7 @@ export default function Documents() {
 
       {/* Filtres */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        {['all', 'factures_financeurs', 'factures_formateurs', 'avis_paiement', 'frais_admin', 'presence', 'bilans', 'cv', 'pedago'].map(c => {
+        {['all', 'factures_financeurs', 'factures_formateurs', 'avis_paiement', 'frais_admin', 'presence', 'bilans', 'cv', 'pedago', 'contrat_st', 'reglement', 'programme', 'charte', 'matrice', 'qcm_formatif'].map(c => {
           const count = countFor(c)
           const active = cat === c
           return (
@@ -995,6 +1012,17 @@ export default function Documents() {
                   </select>
                 </div>
               </div>
+              {uploadCat === 'contrat_st' && (
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Formateur *</label>
+                    <select className="form-input" value={uploadFormateur} onChange={e => setUploadFormateur(e.target.value)}>
+                      <option value="">Choisir un formateur…</option>
+                      {formateurs.map(f => <option key={f.id} value={f.nom}>{f.nom}</option>)}
+                    </select>
+                  </div>
+                </div>
+              )}
               <div className="form-row">
                 <div className="form-group">
                   <label className="form-label">Session(s) associée(s) <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--text-tertiary)', fontSize: 11 }}>— optionnel, sélection multiple</span></label>
