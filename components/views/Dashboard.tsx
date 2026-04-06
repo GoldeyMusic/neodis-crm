@@ -137,6 +137,24 @@ export default function Dashboard() {
 
   const statusLabel: Record<string, string> = { active: 'En cours', done: 'Terminée', upcoming: 'À venir' }
 
+  // ── Documents manquants par session ──
+  const REQUIRED_CATS = [
+    { cat: 'factures_financeurs', label: 'Factures financeurs' },
+    { cat: 'factures_formateurs', label: 'Factures formateurs' },
+    { cat: 'presence',            label: 'Feuilles de présence' },
+    { cat: 'bilans',              label: 'Bilans' },
+  ]
+
+  const docAlerts = useMemo(() => {
+    return sessions.map(s => {
+      const sessionDocs = documents.filter(d => d.session?.split(' | ').includes(s.name))
+      const missing = REQUIRED_CATS.filter(req => !sessionDocs.some(d => d.cat === req.cat))
+      const total = REQUIRED_CATS.length
+      const done = total - missing.length
+      return { session: s, missing, done, total }
+    }).filter(a => a.missing.length > 0)
+  }, [sessions, documents])
+
   return (
     <>
     <div>
@@ -303,6 +321,43 @@ export default function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Alertes documents manquants */}
+      {docAlerts.length > 0 && (
+        <div className="card animate-in" style={{ marginTop: 16 }}>
+          <div className="card-header">
+            <div className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ color: 'var(--warn)' }}>⚠</span> Documents manquants
+              <span style={{ fontFamily: 'DM Mono', fontSize: 10, padding: '1px 6px', borderRadius: 10, background: 'var(--warn-bg)', color: 'var(--warn)', border: '1px solid #FDE68A' }}>
+                {docAlerts.reduce((sum, a) => sum + a.missing.length, 0)}
+              </span>
+            </div>
+          </div>
+          {docAlerts.map(({ session: s, missing, done: d, total: t }) => (
+            <div
+              key={s.id}
+              className="session-item"
+              style={{ cursor: 'pointer' }}
+              onClick={() => setSelectedSession(s)}
+            >
+              <div style={{ width: 32, height: 32, borderRadius: 8, background: 'var(--warn-bg)', border: '1px solid #FDE68A', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 13, flexShrink: 0 }}>📁</div>
+              <div className="session-info">
+                <div className="session-name">{s.name}</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginTop: 4 }}>
+                  {missing.map(m => (
+                    <span key={m.cat} style={{ fontSize: 10, padding: '1px 6px', borderRadius: 8, background: 'var(--red-bg)', color: 'var(--red)', border: '1px solid #FECACA', fontFamily: 'DM Mono' }}>
+                      {m.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+              <span style={{ fontSize: 12, color: d > 0 ? 'var(--warn)' : 'var(--red)', fontFamily: 'DM Mono', flexShrink: 0 }}>
+                {d}/{t}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
 
     {selectedSession && (

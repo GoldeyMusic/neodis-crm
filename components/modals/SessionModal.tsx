@@ -1,9 +1,17 @@
 'use client'
-import { useState, useRef } from 'react'
+import { useState, useRef, useMemo } from 'react'
 import { useCRM, Document } from '@/lib/store'
 import { Session, Participant } from '@/lib/data'
 import ParticipantModal from './ParticipantModal'
 import DocumentViewer from '../ui/DocumentViewer'
+
+/* ── Documents attendus par session ── */
+const REQUIRED_DOC_CATS = [
+  { cat: 'factures_financeurs', label: 'Factures financeurs', icon: '💰' },
+  { cat: 'factures_formateurs', label: 'Factures formateurs', icon: '🧾' },
+  { cat: 'presence',            label: 'Feuilles de présence', icon: '✅' },
+  { cat: 'bilans',              label: 'Bilans',               icon: '📊' },
+]
 
 interface Props { session: Session; onClose: () => void }
 
@@ -122,6 +130,9 @@ export default function SessionModal({ session: sessionProp, onClose }: Props) {
                     </div>
                   </div>
                 )}
+
+                {/* Complétude documentaire */}
+                <DocCompletenessBlock session={session} onGoToDocs={() => setActiveTab(2)} />
               </div>
             )}
 
@@ -237,6 +248,54 @@ const catColors: Record<string, { bg: string; color: string; border: string }> =
   bilans:              { bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
   cv:                  { bg: 'var(--ft-bg)', color: 'var(--ft)', border: 'var(--ft-border)' },
   pedago:              { bg: 'var(--surface-2)', color: 'var(--text-tertiary)', border: 'var(--border)' },
+}
+
+/* ── Bloc complétude documentaire (Vue d'ensemble) ── */
+function DocCompletenessBlock({ session, onGoToDocs }: { session: Session; onGoToDocs: () => void }) {
+  const { documents } = useCRM()
+  const sessionDocs = documents.filter(d => d.session?.split(' | ').includes(session.name))
+
+  const status = REQUIRED_DOC_CATS.map(req => {
+    const count = sessionDocs.filter(d => d.cat === req.cat).length
+    return { ...req, count, ok: count > 0 }
+  })
+  const total = status.length
+  const done = status.filter(s => s.ok).length
+  const pct = Math.round((done / total) * 100)
+  const allDone = done === total
+
+  return (
+    <div style={{ marginTop: 16, padding: '14px 16px', background: allDone ? '#F0FFF4' : 'var(--surface-2)', border: `1px solid ${allDone ? '#BBF7D0' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 8 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.04em', color: 'var(--text-secondary)' }}>
+          Documents
+        </div>
+        <span style={{ fontSize: 12, color: allDone ? '#16A34A' : 'var(--text-tertiary)', fontFamily: 'DM Mono', fontWeight: 500 }}>
+          {done}/{total} catégories
+        </span>
+      </div>
+
+      {/* Barre de progression */}
+      <div style={{ height: 6, borderRadius: 3, background: 'var(--border)', overflow: 'hidden', marginBottom: 10 }}>
+        <div style={{ height: '100%', width: `${pct}%`, borderRadius: 3, background: allDone ? '#16A34A' : pct >= 50 ? '#D97706' : '#DC2626', transition: 'width .4s ease' }} />
+      </div>
+
+      {/* Détail par catégorie */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px 16px' }}>
+        {status.map(s => (
+          <div
+            key={s.cat}
+            style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, color: s.ok ? '#16A34A' : 'var(--text-tertiary)', cursor: 'pointer' }}
+            onClick={onGoToDocs}
+          >
+            <span style={{ fontSize: 10, width: 14, textAlign: 'center' }}>{s.ok ? '✓' : '○'}</span>
+            <span style={{ fontWeight: s.ok ? 500 : 400 }}>{s.label}</span>
+            {s.count > 1 && <span style={{ fontFamily: 'DM Mono', fontSize: 10, opacity: .6 }}>×{s.count}</span>}
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 function SessionDocumentsTab({ session }: { session: Session }) {
