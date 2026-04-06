@@ -23,13 +23,17 @@ export interface PortalData {
  * Retourne null si le token est invalide.
  */
 export async function loadPortalData(token: string): Promise<PortalData | null> {
+  console.log('[portal] loading data for token:', token?.slice(0, 8) + '…')
+
   // 1. Charger tous les formateurs et trouver celui avec ce token
   const { data: fRows, error: fErr } = await supabase.from('formateurs').select('data')
-  if (fErr || !fRows) return null
+  if (fErr) { console.error('[portal] Supabase formateurs error:', fErr.message); return null }
+  if (!fRows || fRows.length === 0) { console.error('[portal] No formateurs found in Supabase'); return null }
 
   const allFormateurs = fRows.map(r => r.data as Formateur)
+  console.log('[portal] Found', allFormateurs.length, 'formateurs, tokens:', allFormateurs.map(f => f.token?.slice(0,8)).filter(Boolean))
   const formateur = allFormateurs.find(f => f.token === token)
-  if (!formateur) return null
+  if (!formateur) { console.error('[portal] No formateur matches token'); return null }
 
   // 2. Charger les sessions et filtrer celles où le formateur intervient
   const { data: sRows } = await supabase.from('sessions').select('data')

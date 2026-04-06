@@ -57,16 +57,30 @@ const TABS = [
 export default function FormateurPortal({ params }: { params: { token: string } }) {
   const [data, setData] = useState<PortalData | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
+  const [error, setError] = useState<string | false>(false)
   const [activeTab, setActiveTab] = useState('recap')
 
   useEffect(() => {
-    loadPortalData(params.token).then(d => {
-      if (d) setData(d)
-      else setError(true)
-      setLoading(false)
+    // Support both sync and async params (Next.js 14/15 compat)
+    const resolveToken = async () => {
+      const p = params instanceof Promise ? await params : params
+      return p.token
+    }
+    resolveToken().then(token => {
+      if (!token) { setError('Token manquant'); setLoading(false); return }
+      loadPortalData(token)
+        .then(d => {
+          if (d) setData(d)
+          else setError('Formateur introuvable pour ce token')
+          setLoading(false)
+        })
+        .catch(err => {
+          console.error('[portal] loadPortalData error:', err)
+          setError('Erreur de chargement')
+          setLoading(false)
+        })
     })
-  }, [params.token])
+  }, [params])
 
   if (loading) return (
     <div className="portal-shell">
@@ -82,7 +96,13 @@ export default function FormateurPortal({ params }: { params: { token: string } 
       <div className="portal-error">
         <div style={{ fontSize: 48, marginBottom: 16 }}>🔒</div>
         <div style={{ fontSize: 18, fontWeight: 500, marginBottom: 8 }}>Lien invalide</div>
-        <div style={{ color: 'var(--text-tertiary)' }}>Ce lien d'accès formateur n'est pas reconnu ou a expiré.</div>
+        <div style={{ color: 'var(--text-tertiary)', maxWidth: 360, textAlign: 'center', lineHeight: 1.6 }}>
+          Ce lien d'accès formateur n'est pas reconnu ou a expiré.
+          <br />Contactez l'équipe NEODIS si le problème persiste.
+        </div>
+        {typeof error === 'string' && process.env.NODE_ENV === 'development' && (
+          <div style={{ marginTop: 16, fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono' }}>{error}</div>
+        )}
       </div>
     </div>
   )
