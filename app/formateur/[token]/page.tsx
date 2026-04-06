@@ -397,10 +397,15 @@ function DocumentsTab({ data }: { data: PortalData }) {
 
   const catLabels: Record<string, string> = {
     pedago: 'Cours / Pédago', cv: 'CV', contrat: 'Contrat',
-    factures_formateurs: 'Facture',
+    factures_formateurs: 'Facture', contrat_st: 'Contrat sous-traitance',
+    reglement: 'Règlement intérieur', programme: 'Programme détaillé',
+    charte: 'Charte qualité', matrice: 'Matrice progression',
+    qcm_formatif: 'QCM formatifs',
   }
   const catIcons: Record<string, string> = {
     pedago: '📚', cv: '📋', contrat: '📝', factures_formateurs: '🧾',
+    contrat_st: '📝', reglement: '📜', programme: '📑',
+    charte: '✅', matrice: '📊', qcm_formatif: '📝',
   }
 
   const allDocs = [...documents, ...uploaded]
