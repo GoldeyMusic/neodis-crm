@@ -48,7 +48,7 @@ export default function Login() {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <div className="login-logo">NEO<span>DIS</span></div>
+        <div className="login-logo">UMANI <span style={{ fontSize: '0.6em', fontWeight: 400, opacity: 0.6 }}>by</span> NEO<span>DIS</span></div>
         <div className="login-tagline">Plateforme de gestion pédagogique</div>
         <div className="login-title">Connexion</div>
         <div className="login-subtitle">Accès réservé à l'équipe admin</div>
