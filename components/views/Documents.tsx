@@ -762,8 +762,9 @@ export default function Documents() {
     let linked = 0
     resolved.forEach(({ item, participantId }) => {
       addDocument({ nom: item.file.name, cat: 'factures_financeurs', taille: item.size, date, data: item.data })
-      if (participantId && item.invoiceNum) {
-        updateParticipant(participantId, { factures: item.invoiceNum })
+      if (participantId) {
+        // Utilise le numéro de facture détecté, sinon le nom du fichier comme référence
+        updateParticipant(participantId, { factures: item.invoiceNum || item.file.name.replace(/\.pdf$/i, '') })
         linked++
       }
     })

@@ -70,7 +70,7 @@ export async function loadPortalData(token: string): Promise<PortalData | null> 
   const GLOBAL_CATS = ['reglement', 'programme', 'charte', 'matrice', 'qcm_formatif']
 
   console.log('[portal] Total docs in Supabase:', allDocs.length)
-  console.log('[portal] Doc categories found:', [...new Set(allDocs.map((d: any) => d.cat))])
+  console.log('[portal] Doc categories found:', Array.from(new Set(allDocs.map((d: any) => d.cat))))
   console.log('[portal] Global docs found:', allDocs.filter((d: any) => GLOBAL_CATS.includes(d.cat)).map((d: any) => `${d.cat}: ${d.nom}`))
 
   const documents: PortalDocument[] = allDocs.filter((d: any) => {

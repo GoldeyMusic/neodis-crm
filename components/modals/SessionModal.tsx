@@ -25,7 +25,7 @@ const statusLabel: Record<string, string> = { active: 'En cours', done: 'Termin�
 const tabs = ["Vue d'ensemble", 'Participants', 'Documents', 'Checklist', 'Budget']
 
 export default function SessionModal({ session: sessionProp, onClose }: Props) {
-  const { participants, sessions, deleteSession, updateSession, showToast } = useCRM()
+  const { participants, sessions, documents, deleteSession, updateSession, showToast } = useCRM()
   const [activeTab, setActiveTab] = useState(0)
   const [selectedParticipant, setSelectedParticipant] = useState<Participant | null>(null)
 
@@ -34,10 +34,17 @@ export default function SessionModal({ session: sessionProp, onClose }: Props) {
 
   const sessionParticipants = participants.filter(p => p.session === session.name)
 
+  // Factures financeurs liées à cette session (documents uploadés)
+  const sessionFactureDocs = documents.filter(d =>
+    d.cat === 'factures_financeurs' && d.session && d.session.split(' | ').includes(session.name)
+  )
+
   // CA facturé de la session
   const TARIF_AIF = 2100
   const isPrestappli = session.typeFT === 'Prest@ppli'
-  const nbFactures   = sessionParticipants.filter(p => p.factures && p.factures !== '—').length
+  // Compter via les participants liés OU via les documents factures tagués sur la session
+  const nbFacturesParticipants = sessionParticipants.filter(p => p.factures && p.factures !== '—').length
+  const nbFactures = Math.max(nbFacturesParticipants, sessionFactureDocs.length)
   const caFacture    = isPrestappli
     ? (nbFactures > 0 || session.status === 'done' ? (session.montantCA ?? 0) : 0)
     : nbFactures * TARIF_AIF

@@ -92,26 +92,35 @@ export default function Dashboard() {
   // CA facturé : logique différenciée par type de financement
   // - Prest@ppli : montant forfaitaire fixe (montantCA sur la session)
   // - AIF        : nombre de participants avec une facture liée × tarif AIF
+  //   On compte aussi les documents factures_financeurs tagués sur la session
   const caFacture = sessions.reduce((total, s) => {
+    const nbFactureDocs = documents.filter(d =>
+      d.cat === 'factures_financeurs' && d.session && d.session.split(' | ').includes(s.name)
+    ).length
     if (s.typeFT === 'Prest@ppli') {
-      // Forfait global — comptabilisé si la session est terminée et a un montant défini
       const sessionDone = s.status === 'done'
-      const hasFacture  = participants.some(p => p.session === s.name && p.factures && p.factures !== '—')
+      const hasFacture  = nbFactureDocs > 0 || participants.some(p => p.session === s.name && p.factures && p.factures !== '—')
       if ((sessionDone || hasFacture) && s.montantCA) return total + s.montantCA
     } else {
-      // AIF : un participant = une facture individuelle
-      const linked = participants.filter(p => p.session === s.name && p.factures && p.factures !== '—').length
-      return total + linked * TARIF_AIF
+      // AIF : max entre participants liés et documents factures tagués
+      const linkedParticipants = participants.filter(p => p.session === s.name && p.factures && p.factures !== '—').length
+      const nbFactures = Math.max(linkedParticipants, nbFactureDocs)
+      return total + nbFactures * TARIF_AIF
     }
     return total
   }, 0)
 
   // Détail pour le sous-titre du KPI
-  const nbFacturesAIF       = participants.filter(p => {
-    const s = sessions.find(s => s.name === p.session)
-    return s?.typeFT !== 'Prest@ppli' && p.factures && p.factures !== '—'
+  const nbFacturesAIF = sessions.filter(s => s.typeFT !== 'Prest@ppli').reduce((n, s) => {
+    const linkedP = participants.filter(p => p.session === s.name && p.factures && p.factures !== '—').length
+    const linkedD = documents.filter(d => d.cat === 'factures_financeurs' && d.session && d.session.split(' | ').includes(s.name)).length
+    return n + Math.max(linkedP, linkedD)
+  }, 0)
+  const nbSessionsPrestappli = sessions.filter(s => {
+    if (s.typeFT !== 'Prest@ppli' || !s.montantCA) return false
+    const hasDocs = documents.some(d => d.cat === 'factures_financeurs' && d.session && d.session.split(' | ').includes(s.name))
+    return s.status === 'done' || hasDocs || participants.some(p => p.session === s.name && p.factures && p.factures !== '—')
   }).length
-  const nbSessionsPrestappli = sessions.filter(s => s.typeFT === 'Prest@ppli' && s.montantCA && (s.status === 'done' || participants.some(p => p.session === s.name && p.factures && p.factures !== '—'))).length
 
   // CA prévisionnel : sessions non terminées, logique identique
   const prevSessions     = sessions.filter(s => s.status !== 'done')
