@@ -12,6 +12,7 @@ import Dashboard from './views/Dashboard'
 import Sessions from './views/Sessions'
 import Participants from './views/Participants'
 import Formateurs from './views/Formateurs'
+import Equipe from './views/Equipe'
 import Documents from './views/Documents'
 import Admin from './views/Admin'
 import Impact from './views/Impact'
@@ -65,6 +66,7 @@ export default function CRMApp() {
           <div style={{ display: v === 'sessions'     ? undefined : 'none' }}><Sessions /></div>
           <div style={{ display: v === 'participants' ? undefined : 'none' }}><Participants /></div>
           <div style={{ display: v === 'formateurs'   ? undefined : 'none' }}><Formateurs /></div>
+          <div style={{ display: v === 'equipe'       ? undefined : 'none' }}><Equipe /></div>
           <div style={{ display: v === 'documents'    ? undefined : 'none' }}><Documents /></div>
           <div style={{ display: v === 'impact'       ? undefined : 'none' }}><Impact /></div>
           <div style={{ display: v === 'admin'        ? undefined : 'none' }}><Admin /></div>

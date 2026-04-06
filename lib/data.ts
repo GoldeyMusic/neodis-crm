@@ -74,6 +74,25 @@ export interface Formateur {
   type: 'principal' | 'masterclass'
 }
 
+export interface MembreEquipe {
+  id: number
+  prenom: string
+  nom: string
+  role: string
+  email: string
+  tel: string
+  photo?: string
+  linkedEmail?: string  // email du compte CRM associé
+}
+
+export const equipeData: MembreEquipe[] = [
+  { id: 1, prenom: 'David',    nom: 'BERDUGO',   role: '',  email: 'goldey@neodis-medias.fr',    tel: '', linkedEmail: 'goldey@neodis-medias.fr' },
+  { id: 2, prenom: 'David',    nom: 'ABAKAN',    role: '',  email: 'abakan@neodis-medias.fr',    tel: '', linkedEmail: 'abakan@neodis-medias.fr' },
+  { id: 3, prenom: 'Harry',    nom: 'ROSELMACK', role: '',  email: '',                           tel: '' },
+  { id: 4, prenom: 'Jennifer', nom: 'GALAP',     role: '',  email: 'jennifer.galap@umani.town',  tel: '', linkedEmail: 'jennifer.galap@umani.town' },
+  { id: 5, prenom: 'Philip',   nom: 'NESMES',    role: '',  email: 'philip@neodis-medias.fr',    tel: '', linkedEmail: 'philip@neodis-medias.fr' },
+]
+
 // ── SESSIONS ──
 export const sessionsData: Session[] = [
   {

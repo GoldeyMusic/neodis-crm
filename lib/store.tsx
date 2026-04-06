@@ -1,6 +1,6 @@
 'use client'
 import { createContext, useContext, useState, useCallback, ReactNode, useEffect, useRef } from 'react'
-import { Session, Participant, Formateur, ImpactEntry, ImpactPeriode, sessionsData, participantsData, formateursData, impactSeedData } from './data'
+import { Session, Participant, Formateur, MembreEquipe, ImpactEntry, ImpactPeriode, sessionsData, participantsData, formateursData, impactSeedData, equipeData } from './data'
 import { loadRecords, upsertAll, deleteRecord, loadImpact, saveImpact, loadUserProfile, saveUserProfile } from './storage'
 import { fileSave, fileDelete } from './filestore'
 
@@ -32,6 +32,7 @@ interface CRMState {
   sessions: Session[]
   participants: Participant[]
   formateurs: Formateur[]
+  equipe: MembreEquipe[]
   documents: Document[]
   impact: ImpactEntry[]
 
@@ -39,6 +40,7 @@ interface CRMState {
   addParticipant: (p: Omit<Participant, 'id'>) => void
   addFormateur: (f: Omit<Formateur, 'id'>) => void
   updateFormateur: (id: number, updates: Partial<Formateur>) => Promise<void>
+  updateMembre: (id: number, updates: Partial<MembreEquipe>) => Promise<void>
   addDocument: (d: Omit<Document, 'id'>) => Promise<void>
   updateDocument: (id: number, updates: Partial<Document>) => void
   deleteDocument: (id: number) => void
@@ -79,6 +81,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const [sessions, setSessions] = useState<Session[]>(sessionsData)
   const [participants, setParticipants] = useState<Participant[]>(SEED_PARTICIPANTS)
   const [formateurs, setFormateurs] = useState<Formateur[]>(formateursData)
+  const [equipe, setEquipe] = useState<MembreEquipe[]>(equipeData)
   const [documents, setDocuments] = useState<Document[]>([])
   const [impact, setImpact] = useState<ImpactEntry[]>(impactSeedData)
 
@@ -104,10 +107,11 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     async function loadAll() {
       try {
-        const [dbSessions, dbParticipants, dbFormateurs, dbDocuments, dbImpact] = await Promise.all([
+        const [dbSessions, dbParticipants, dbFormateurs, dbEquipe, dbDocuments, dbImpact] = await Promise.all([
           loadRecords<Session>('sessions'),
           loadRecords<Participant>('participants'),
           loadRecords<Formateur>('formateurs'),
+          loadRecords<MembreEquipe>('equipe'),
           loadRecords<Document>('documents'),
           loadImpact(),
         ])
@@ -118,6 +122,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
           setParticipants(dbParticipants.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id)))
         }
         if (dbFormateurs.length > 0) setFormateurs(dbFormateurs)
+        if (dbEquipe.length > 0) setEquipe(dbEquipe)
         if (dbDocuments.length > 0) setDocuments(dbDocuments)
         if (dbImpact.length > 0) setImpact(dbImpact)
       } catch (err) {
@@ -146,6 +151,11 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     if (!filesLoaded) return
     upsertAll('formateurs', formateurs)
   }, [formateurs, filesLoaded])
+
+  useEffect(() => {
+    if (!filesLoaded) return
+    upsertAll('equipe', equipe)
+  }, [equipe, filesLoaded])
 
   useEffect(() => {
     if (!filesLoaded) return
@@ -276,6 +286,18 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     setFormateurs(prev => prev.map(f => f.id === id ? { ...f, ...finalUpdates } : f))
   }, [])
 
+  // updateMembre : upload photo si base64, puis met à jour l'état (persiste via l'effet equipe)
+  const updateMembre = useCallback(async (id: number, updates: Partial<MembreEquipe>) => {
+    let finalUpdates = { ...updates }
+
+    if (isBase64(updates.photo)) {
+      const url = await fileSave(`membre_photo_${id}`, updates.photo!)
+      if (url) finalUpdates = { ...finalUpdates, photo: url }
+    }
+
+    setEquipe(prev => prev.map(m => m.id === id ? { ...m, ...finalUpdates } : m))
+  }, [])
+
   // ── Documents ───────────────────────────────────────────────────────────────
   // addDocument est async : upload le fichier dans Supabase Storage, puis stocke l'URL.
   const addDocument = useCallback(async (d: Omit<Document, 'id'>) => {
@@ -338,10 +360,10 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   return (
     <CRMContext.Provider value={{
       user, login, logout, updateUser,
-      sessions, participants, formateurs, documents, impact,
+      sessions, participants, formateurs, equipe, documents, impact,
       addSession, updateSession, deleteSession,
       addParticipant, updateParticipant, deleteParticipant,
-      addFormateur, updateFormateur,
+      addFormateur, updateFormateur, updateMembre,
       addDocument, updateDocument, deleteDocument,
       updateImpact,
       filesLoaded,
