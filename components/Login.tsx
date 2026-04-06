@@ -11,14 +11,17 @@ export default function Login() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const emailRef = useRef<HTMLInputElement>(null)
-  const rememberedEmail = useRef<string>('')
 
   useEffect(() => {
-    emailRef.current?.focus()
-    if (rememberedEmail.current) {
-      setEmail(rememberedEmail.current)
-      setRemember(true)
+    // Pré-remplir l'email si une session est mémorisée
+    const saved = localStorage.getItem('neodis_session')
+    if (saved) {
+      try {
+        const { email: savedEmail } = JSON.parse(saved)
+        if (savedEmail) { setEmail(savedEmail); setRemember(true) }
+      } catch { /* ignore */ }
     }
+    emailRef.current?.focus()
   }, [])
 
   const handleLogin = async () => {
@@ -27,21 +30,11 @@ export default function Login() {
     setError('')
     setLoading(true)
     await new Promise(r => setTimeout(r, 700))
-    const ok = login(email.trim().toLowerCase(), password)
+    const ok = login(email.trim().toLowerCase(), password, remember)
     setLoading(false)
-    if (ok) {
-      if (remember) rememberedEmail.current = email.trim().toLowerCase()
-      else rememberedEmail.current = ''
-    } else {
+    if (!ok) {
       setError('Email ou mot de passe incorrect')
       setPassword('')
-    }
-  }
-
-  const handleLogout_restoreEmail = () => {
-    if (rememberedEmail.current) {
-      setEmail(rememberedEmail.current)
-      setRemember(true)
     }
   }
 

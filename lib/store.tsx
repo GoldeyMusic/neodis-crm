@@ -25,7 +25,7 @@ interface User {
 
 interface CRMState {
   user: User | null
-  login: (email: string, password: string) => boolean
+  login: (email: string, password: string, remember?: boolean) => boolean
   logout: () => void
   updateUser: (u: Partial<User>) => Promise<void>
 
@@ -178,23 +178,53 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [])
 
   // ── Auth ────────────────────────────────────────────────────────────────────
-  const login = useCallback((email: string, password: string) => {
+
+  // Restaure la session sauvegardée au chargement de la page
+  useEffect(() => {
+    const saved = localStorage.getItem('neodis_session')
+    if (!saved) return
+    try {
+      const { email } = JSON.parse(saved)
+      const found = authUsers.find(u => u.email.toLowerCase() === email.toLowerCase())
+      if (found) {
+        const baseUser = { email: found.email, name: found.name, nom: found.nom }
+        setUser(baseUser)
+        loadUserProfile(found.email).then(profile => {
+          if (profile) setUser(prev => prev ? { ...prev, ...profile } : prev)
+        }).catch(console.warn)
+      } else {
+        localStorage.removeItem('neodis_session')
+      }
+    } catch {
+      localStorage.removeItem('neodis_session')
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+
+  const login = useCallback((email: string, password: string, remember = false) => {
     const found = authUsers.find(u => u.email.toLowerCase() === email.toLowerCase() && u.password === password)
     if (found) {
       const baseUser = { email: found.email, name: found.name, nom: found.nom }
       setUser(baseUser)
+      // Sauvegarder la session si "se souvenir de moi" est coché
+      if (remember) {
+        localStorage.setItem('neodis_session', JSON.stringify({ email: found.email }))
+      } else {
+        localStorage.removeItem('neodis_session')
+      }
       // Charger le profil persisté (photo etc.) en arrière-plan
       loadUserProfile(found.email).then(profile => {
-        if (profile) {
-          setUser(prev => prev ? { ...prev, ...profile } : prev)
-        }
+        if (profile) setUser(prev => prev ? { ...prev, ...profile } : prev)
       }).catch(err => console.warn('[store] loadUserProfile failed:', err))
       return true
     }
     return false
   }, [])
 
-  const logout = useCallback(() => { setUser(null); setActiveView('dashboard') }, [])
+  const logout = useCallback(() => {
+    localStorage.removeItem('neodis_session')
+    setUser(null)
+    setActiveView('dashboard')
+  }, [])
 
   // updateUser est async : upload photo si base64, puis persiste dans Supabase
   const updateUser = useCallback(async (u: Partial<User>) => {
