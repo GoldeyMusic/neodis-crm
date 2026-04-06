@@ -73,6 +73,11 @@ export async function loadPortalData(token: string): Promise<PortalData | null> 
   console.log('[portal] Doc categories found:', Array.from(new Set(allDocs.map((d: any) => d.cat))))
   console.log('[portal] Global docs found:', allDocs.filter((d: any) => GLOBAL_CATS.includes(d.cat)).map((d: any) => `${d.cat}: ${d.nom}`))
 
+  // Log les docs pédago pour debug
+  const pedagoDocs = allDocs.filter((d: any) => d.cat === 'pedago')
+  console.log('[portal] Pedago docs in DB:', pedagoDocs.map((d: any) => ({ nom: d.nom, formateur: d.formateur, session: d.session, uploadedBy: d.uploadedBy })))
+  console.log('[portal] Current formateur nom:', JSON.stringify(formateur.nom))
+
   const documents: PortalDocument[] = allDocs.filter((d: any) => {
     // Documents globaux NEODIS → visibles par tous les formateurs
     if (GLOBAL_CATS.includes(d.cat)) return true
