@@ -82,7 +82,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   const [documents, setDocuments] = useState<Document[]>([])
   const [impact, setImpact] = useState<ImpactEntry[]>(impactSeedData)
 
-  const [user, setUser] = useState<User | null>({ email: 'admin@neodis.fr', name: 'Admin', nom: 'NEODIS' })
+  const [user, setUser] = useState<User | null>(null)
   const [activeView, setActiveView] = useState('dashboard')
   const [toast, setToast] = useState('')
   const [activityLog, setActivityLog] = useState<{ icon: string; text: string; time: string }[]>([])
