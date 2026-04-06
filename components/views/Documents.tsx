@@ -494,6 +494,31 @@ export default function Documents() {
   const [formateurFactureItems, setFormateurFactureItems] = useState<FactureFormateurItem[] | null>(null)
   const [avisItems, setAvisItems] = useState<AvisItem[] | null>(null)
   const [fraisAdminItems, setFraisAdminItems] = useState<FraisAdminItem[] | null>(null)
+  const [selectMode, setSelectMode] = useState(false)
+  const [selected, setSelected] = useState<Set<number>>(new Set())
+
+  const toggleSelect = (id: number) => setSelected(prev => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
+  const exitSelectMode = () => { setSelectMode(false); setSelected(new Set()) }
+
+  const deleteSelected = () => {
+    if (selected.size === 0) return
+    if (!confirm(`Supprimer ${selected.size} document${selected.size > 1 ? 's' : ''} ?`)) return
+    selected.forEach(id => {
+      if (id < 0) {
+        // CV formateur
+        const f = formateurs.find(f => -f.id === id)
+        if (f) updateFormateurCV(f.id)
+      } else {
+        deleteDocument(id)
+      }
+    })
+    showToast(`${selected.size} document${selected.size > 1 ? 's' : ''} supprimé${selected.size > 1 ? 's' : ''}`)
+    exitSelectMode()
+  }
 
   // CV Formateurs depuis les fiches
   const cvDocs: Document[] = formateurs
@@ -729,10 +754,34 @@ export default function Documents() {
           <div className="page-title">Documents</div>
           <div className="page-subtitle">{allDocs.length} document{allDocs.length !== 1 ? 's' : ''}</div>
         </div>
-        <button className="btn btn-primary" onClick={() => fileRef.current?.click()}>
-          <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 11V3M4 7l4-4 4 4"/><path d="M3 13h10"/></svg>
-          Uploader
-        </button>
+        <div style={{ display: 'flex', gap: 8 }}>
+          {!selectMode ? (
+            <>
+              <button className="btn" onClick={() => { setSelectMode(true); setSelected(new Set()) }}>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><path d="M5 8l2 2 4-4"/></svg>
+                Sélectionner
+              </button>
+              <button className="btn btn-primary" onClick={() => fileRef.current?.click()}>
+                <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 11V3M4 7l4-4 4 4"/><path d="M3 13h10"/></svg>
+                Uploader
+              </button>
+            </>
+          ) : (
+            <>
+              <button className="btn" onClick={() => {
+                if (selected.size === filtered.length) setSelected(new Set())
+                else setSelected(new Set(filtered.map(d => d.id)))
+              }}>
+                {selected.size === filtered.length ? 'Tout désélectionner' : 'Tout sélectionner'}
+              </button>
+              <button className="btn btn-danger" disabled={selected.size === 0} onClick={deleteSelected}>
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M3 5h10l-1 9H4L3 5zM6 8v4M10 8v4M5 5V3a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
+                Supprimer ({selected.size})
+              </button>
+              <button className="btn" onClick={exitSelectMode}>Annuler</button>
+            </>
+          )}
+        </div>
         <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleFileSelect} />
       </div>
 
@@ -833,8 +882,14 @@ export default function Documents() {
         ) : filtered.map(d => {
           const colors = catColors[d.cat] || catColors.pedago
           const isCvFromFormateur = d.id < 0
+          const isSelected = selected.has(d.id)
           return (
-            <div key={d.id} className="doc-item">
+            <div key={d.id} className="doc-item" onClick={selectMode ? () => toggleSelect(d.id) : undefined} style={selectMode ? { cursor: 'pointer', background: isSelected ? 'var(--ft-bg)' : undefined } : undefined}>
+              {selectMode && (
+                <div style={{ width: 20, height: 20, borderRadius: 4, border: `2px solid ${isSelected ? 'var(--ft)' : 'var(--border-strong)'}`, background: isSelected ? 'var(--ft)' : 'var(--surface)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, transition: 'all .12s' }}>
+                  {isSelected && <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="white" strokeWidth="2.5"><path d="M3 8l4 4 6-7"/></svg>}
+                </div>
+              )}
               <div style={{ width: 36, height: 36, borderRadius: 8, background: colors.bg, border: `1px solid ${colors.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 15 }}>
                 {catIcon[d.cat] || '📄'}
               </div>
@@ -850,28 +905,29 @@ export default function Documents() {
                   {(d as any).uploadedBy === 'formateur' && <span className="tag" style={{ fontSize: 10, padding: '1px 6px', background: '#F0FDF4', color: '#16A34A', border: '1px solid #BBF7D0' }}>Via portail</span>}
                 </div>
               </div>
-              <div className="doc-actions">
-                <button
-                  className="btn btn-sm"
-                  disabled={!filesLoaded && !d.data}
-                  title={!filesLoaded && !d.data ? 'Chargement…' : undefined}
-                  onClick={() => d.data ? setViewer({ name: d.nom, data: d.data }) : showToast('Fichier en cours de chargement…')}
-                >
-                  {!filesLoaded && !d.data
-                    ? <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: '1.5px solid currentColor', borderTopColor: 'transparent', animation: 'spin .6s linear infinite' }} />
-                    : <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="3"/><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/></svg>
-                  }
-                  {!filesLoaded && !d.data ? 'Chargement' : 'Voir'}
-                </button>
-                <button
-                  className="btn btn-sm"
-                  disabled={!filesLoaded && !d.data}
-                  onClick={() => d.data ? downloadDoc(d.data, d.nom) : showToast('Fichier en cours de chargement…')}
-                >
-                  <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 3v8M5 8l3 3 3-3M3 13h10"/></svg>
-                  ↓
-                </button>
-                <button className="btn btn-sm" onClick={() => setEditDoc(d)}>
+              {!selectMode && (
+                <div className="doc-actions">
+                  <button
+                    className="btn btn-sm"
+                    disabled={!filesLoaded && !d.data}
+                    title={!filesLoaded && !d.data ? 'Chargement…' : undefined}
+                    onClick={() => d.data ? setViewer({ name: d.nom, data: d.data }) : showToast('Fichier en cours de chargement…')}
+                  >
+                    {!filesLoaded && !d.data
+                      ? <span style={{ display: 'inline-block', width: 10, height: 10, borderRadius: '50%', border: '1.5px solid currentColor', borderTopColor: 'transparent', animation: 'spin .6s linear infinite' }} />
+                      : <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="8" r="3"/><path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z"/></svg>
+                    }
+                    {!filesLoaded && !d.data ? 'Chargement' : 'Voir'}
+                  </button>
+                  <button
+                    className="btn btn-sm"
+                    disabled={!filesLoaded && !d.data}
+                    onClick={() => d.data ? downloadDoc(d.data, d.nom) : showToast('Fichier en cours de chargement…')}
+                  >
+                    <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 3v8M5 8l3 3 3-3M3 13h10"/></svg>
+                    ↓
+                  </button>
+                  <button className="btn btn-sm" onClick={() => setEditDoc(d)}>
                     <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
                     Modifier
                   </button>
@@ -885,7 +941,8 @@ export default function Documents() {
                       }
                     }
                   }}>✕</button>
-              </div>
+                </div>
+              )}
             </div>
           )
         })}
