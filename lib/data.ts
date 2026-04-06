@@ -88,7 +88,7 @@ export interface MembreEquipe {
 export const equipeData: MembreEquipe[] = [
   { id: 1, prenom: 'David',    nom: 'BERDUGO',   role: '',  email: 'goldey@neodis-medias.fr',    tel: '', linkedEmail: 'goldey@neodis-medias.fr' },
   { id: 2, prenom: 'David',    nom: 'ABAKAN',    role: '',  email: 'abakan@neodis-medias.fr',    tel: '', linkedEmail: 'abakan@neodis-medias.fr' },
-  { id: 3, prenom: 'Harry',    nom: 'ROSELMACK', role: '',  email: '',                           tel: '' },
+  { id: 3, prenom: 'Harry',    nom: 'ROSELMACK', role: '',  email: 'harry@neodis-medias.fr',     tel: '', linkedEmail: 'harry@neodis-medias.fr' },
   { id: 4, prenom: 'Jennifer', nom: 'GALAP',     role: '',  email: 'jennifer.galap@umani.town',  tel: '', linkedEmail: 'jennifer.galap@umani.town' },
   { id: 5, prenom: 'Philip',   nom: 'NESMES',    role: '',  email: 'philip@neodis-medias.fr',    tel: '', linkedEmail: 'philip@neodis-medias.fr' },
 ]
@@ -296,4 +296,5 @@ export const authUsers = [
   { email: 'abakan@neodis-medias.fr', password: 'neodis2026', name: 'David', nom: 'ABAKAN' },
   { email: 'philip@neodis-medias.fr', password: 'neodis2026', name: 'Philip', nom: 'NESMES' },
   { email: 'jennifer.galap@umani.town', password: 'neodis2026', name: 'Jennifer', nom: 'GALAP' },
+  { email: 'harry@neodis-medias.fr', password: 'neodis2026', name: 'Harry', nom: 'ROSELMACK' },
 ]
