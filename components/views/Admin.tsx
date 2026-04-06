@@ -2,6 +2,7 @@
 import { useState, useRef } from 'react'
 import { useCRM } from '@/lib/store'
 import { loadRecords, upsertAll } from '@/lib/storage'
+import { authUsers } from '@/lib/data'
 
 // ── Export / Import (Supabase) ───────────────────────────────────────────────
 
@@ -115,26 +116,42 @@ export default function Admin() {
 
       {tab === 'users' && (
         <div className="card animate-in">
-          <div className="card-header"><div className="card-title">Membres de l'équipe</div></div>
+          <div className="card-header">
+            <div className="card-title">Comptes CRM</div>
+            <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>{authUsers.length} compte{authUsers.length > 1 ? 's' : ''}</span>
+          </div>
           <table className="data-table">
-            <thead><tr><th>Utilisateur</th><th>Email</th><th>Rôle</th><th>Dernière connexion</th><th></th></tr></thead>
+            <thead><tr><th>Utilisateur</th><th>Email</th><th>Rôle</th><th></th></tr></thead>
             <tbody>
-              <tr>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <div className="avatar">{user ? (user.name[0]+user.nom[0]).toUpperCase() : 'AD'}</div>
-                    <span id="admin-current-user-name">{user?.name} {user?.nom}</span>
-                  </div>
-                </td>
-                <td style={{ color: 'var(--text-tertiary)', fontSize: 12 }} id="admin-current-user-email">{user?.email}</td>
-                <td><span className="tag tag-verified">Admin</span></td>
-                <td style={{ color: 'var(--text-tertiary)', fontSize: 12, fontFamily: 'DM Mono' }}>Aujourd'hui</td>
-                <td><button className="tbl-action">Éditer</button></td>
-              </tr>
+              {authUsers.map(u => {
+                const isMe = user?.email.toLowerCase() === u.email.toLowerCase()
+                const initials = u.name && u.nom ? (u.name[0] + u.nom[0]).toUpperCase() : u.name[0]?.toUpperCase() ?? '?'
+                return (
+                  <tr key={u.email} style={isMe ? { background: 'var(--surface-2)' } : {}}>
+                    <td>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                        <div className="avatar">{initials}</div>
+                        <div>
+                          <div style={{ fontWeight: 500, fontSize: 13 }}>{u.name} {u.nom}</div>
+                          {isMe && <div style={{ fontSize: 11, color: 'var(--green, #16A34A)', marginTop: 1 }}>Vous</div>}
+                        </div>
+                      </div>
+                    </td>
+                    <td style={{ color: 'var(--text-tertiary)', fontSize: 12, fontFamily: 'DM Mono' }}>{u.email}</td>
+                    <td>
+                      <span className={`tag ${u.email === 'admin@neodis.fr' ? 'tag-verified' : ''}`}
+                        style={u.email !== 'admin@neodis.fr' ? { background: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)' } : {}}>
+                        {u.email === 'admin@neodis.fr' ? 'Super admin' : 'Admin'}
+                      </span>
+                    </td>
+                    <td>{isMe && <span style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>Connecté</span>}</td>
+                  </tr>
+                )
+              })}
             </tbody>
           </table>
           <div style={{ padding: '12px 20px', fontSize: 12, color: 'var(--text-tertiary)', borderTop: '1px solid var(--border)' }}>
-            Tous les membres invités ont accès complet au CRM (rôle Admin).
+            Tous les membres ont accès complet au CRM.
           </div>
         </div>
       )}
