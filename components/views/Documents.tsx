@@ -576,12 +576,14 @@ export default function Documents() {
     e.target.value = ''
   }
 
-  const confirmUpload = () => {
+  const [uploading, setUploading] = useState(false)
+  const confirmUpload = async () => {
     if (!pendingFile || !uploadCat) { showToast('Sélectionne une catégorie'); return }
     if (uploadCat === 'contrat_st' && !uploadFormateur) { showToast('Sélectionne un formateur pour le contrat'); return }
+    setUploading(true)
     const now = new Date()
     const date = now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' })
-    addDocument({
+    await addDocument({
       nom: uploadNom || pendingFile.name,
       cat: uploadCat,
       session: uploadSession || undefined,
@@ -591,6 +593,7 @@ export default function Documents() {
       data: pendingFile.data,
     })
     showToast(`"${uploadNom || pendingFile.name}" uploadé`)
+    setUploading(false)
     setPendingFile(null); setUploadCat(''); setUploadNom(''); setUploadSession(''); setUploadFormateur(''); setUploadOpen(false)
   }
 
@@ -1043,7 +1046,7 @@ export default function Documents() {
             </div>
             <div className="form-modal-footer">
               <button className="btn" onClick={() => setUploadOpen(false)}>Annuler</button>
-              <button className="btn btn-primary" onClick={confirmUpload}>Enregistrer</button>
+              <button className="btn btn-primary" onClick={confirmUpload} disabled={uploading}>{uploading ? 'Upload en cours…' : 'Enregistrer'}</button>
             </div>
           </div>
         </div>
