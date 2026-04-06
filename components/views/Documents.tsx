@@ -459,13 +459,16 @@ const catLabels: Record<string, string> = {
   bilans: 'Bilans',
   cv: 'CV Formateurs',
   pedago: 'Ressources pédago',
-  contrat_st: 'Contrats sous-traitance',
+  contrat_st: 'Contrat sous-traitance',
   reglement: 'Règlement intérieur',
   programme: 'Programme détaillé',
   charte: 'Charte qualité',
   matrice: 'Matrice progression',
   qcm_formatif: 'QCM formatifs',
 }
+
+// Sous-catégories regroupées sous le filtre "Admin formateurs"
+const ADMIN_FORMATEUR_CATS = ['contrat_st', 'reglement', 'programme', 'charte', 'matrice', 'qcm_formatif']
 
 const catColors: Record<string, { bg: string; color: string; border: string }> = {
   factures_financeurs: { bg: 'var(--ft-bg)', color: 'var(--ft)', border: 'var(--ft-border)' },
@@ -549,8 +552,12 @@ export default function Documents() {
     }))
 
   const allDocs = [...cvDocs, ...documents]
-  const filtered = cat === 'all' ? allDocs : allDocs.filter(d => d.cat === cat)
-  const countFor = (c: string) => c === 'all' ? allDocs.length : allDocs.filter(d => d.cat === c).length
+  const matchCat = (docCat: string, filterCat: string) =>
+    filterCat === 'all' ? true
+    : filterCat === 'admin_formateurs' ? ADMIN_FORMATEUR_CATS.includes(docCat)
+    : docCat === filterCat
+  const filtered = allDocs.filter(d => matchCat(d.cat, cat))
+  const countFor = (c: string) => allDocs.filter(d => matchCat(d.cat, c)).length
 
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -804,14 +811,14 @@ export default function Documents() {
 
       {/* Filtres */}
       <div style={{ display: 'flex', gap: 8, marginBottom: 20, flexWrap: 'wrap' }}>
-        {['all', 'factures_financeurs', 'factures_formateurs', 'avis_paiement', 'frais_admin', 'presence', 'bilans', 'cv', 'pedago', 'contrat_st', 'reglement', 'programme', 'charte', 'matrice', 'qcm_formatif'].map(c => {
+        {['all', 'factures_financeurs', 'factures_formateurs', 'avis_paiement', 'frais_admin', 'presence', 'bilans', 'cv', 'pedago', 'admin_formateurs'].map(c => {
           const count = countFor(c)
           const active = cat === c
           return (
             <button key={c} className="btn btn-sm"
               style={active ? { background: 'var(--text-primary)', color: 'white', borderColor: 'var(--text-primary)' } : {}}
               onClick={() => setCat(c)}>
-              {c === 'all' ? 'Tous' : catLabels[c]}
+              {c === 'all' ? 'Tous' : c === 'admin_formateurs' ? 'Admin formateurs' : catLabels[c]}
               {count > 0 && <span style={{ marginLeft: 5, background: active ? 'rgba(255,255,255,.2)' : 'var(--surface-2)', padding: '0 5px', borderRadius: 10, fontSize: 10, fontFamily: 'DM Mono' }}>{count}</span>}
             </button>
           )
@@ -894,7 +901,7 @@ export default function Documents() {
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--text-tertiary)', fontSize: 13 }}>
             <div style={{ marginBottom: 8, fontSize: 28 }}>📁</div>
             <div style={{ fontWeight: 500, marginBottom: 6 }}>Aucun document</div>
-            <div style={{ fontSize: 12 }}>{cat === 'cv' ? 'Ajoutez des CV depuis les fiches formateurs' : cat === 'all' ? 'Cliquez sur "Uploader" pour ajouter un document' : `Aucun document dans la catégorie "${catLabels[cat] ?? cat}"`}</div>
+            <div style={{ fontSize: 12 }}>{cat === 'cv' ? 'Ajoutez des CV depuis les fiches formateurs' : cat === 'all' ? 'Cliquez sur "Uploader" pour ajouter un document' : cat === 'admin_formateurs' ? 'Aucun document administratif formateurs' : `Aucun document dans la catégorie "${catLabels[cat] ?? cat}"`}</div>
           </div>
         ) : filtered.map(d => {
           const colors = catColors[d.cat] || catColors.pedago
@@ -1008,7 +1015,10 @@ export default function Documents() {
                   <label className="form-label">Catégorie *</label>
                   <select className="form-input" value={uploadCat} onChange={e => setUploadCat(e.target.value)} autoFocus>
                     <option value="">Choisir…</option>
-                    {Object.entries(catLabels).filter(([k]) => k !== 'cv').map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    {Object.entries(catLabels).filter(([k]) => k !== 'cv' && !ADMIN_FORMATEUR_CATS.includes(k)).map(([k, v]) => <option key={k} value={k}>{v}</option>)}
+                    <optgroup label="Admin formateurs">
+                      {ADMIN_FORMATEUR_CATS.map(k => <option key={k} value={k}>{catLabels[k]}</option>)}
+                    </optgroup>
                   </select>
                 </div>
               </div>
