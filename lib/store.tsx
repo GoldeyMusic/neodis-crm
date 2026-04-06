@@ -121,7 +121,13 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         if (dbParticipants.length > 0) {
           setParticipants(dbParticipants.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id)))
         }
-        if (dbFormateurs.length > 0) setFormateurs(dbFormateurs)
+        if (dbFormateurs.length > 0) {
+          // Migration : ajouter un token aux formateurs existants qui n'en ont pas
+          const chars = 'abcdefghijkmnpqrstuvwxyz23456789'
+          const mkToken = () => { let t = ''; for (let i = 0; i < 12; i++) t += chars[Math.floor(Math.random() * chars.length)]; return t }
+          const migrated = dbFormateurs.map(f => f.token ? f : { ...f, token: mkToken() })
+          setFormateurs(migrated)
+        }
         if (dbEquipe.length > 0) setEquipe(dbEquipe)
         if (dbDocuments.length > 0) setDocuments(dbDocuments)
         if (dbImpact.length > 0) setImpact(dbImpact)
@@ -301,8 +307,16 @@ export function CRMProvider({ children }: { children: ReactNode }) {
   }, [logActivity])
 
   // ── Formateurs ──────────────────────────────────────────────────────────────
+  // Génère un token court et unique pour l'espace formateur
+  const generateToken = () => {
+    const chars = 'abcdefghijkmnpqrstuvwxyz23456789'
+    let token = ''
+    for (let i = 0; i < 12; i++) token += chars[Math.floor(Math.random() * chars.length)]
+    return token
+  }
+
   const addFormateur = useCallback((f: Omit<Formateur, 'id'>) => {
-    const newF = { ...f, id: getNextId() }
+    const newF = { ...f, id: getNextId(), token: f.token || generateToken() }
     setFormateurs(prev => [...prev, newF])
     logActivity('＋', `Formateur <strong>${f.nom}</strong> ajouté`)
   }, [logActivity])

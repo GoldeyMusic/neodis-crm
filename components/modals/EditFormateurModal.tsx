@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useCRM } from '@/lib/store'
-import { Formateur } from '@/lib/data'
+import { Formateur, FormateurLien } from '@/lib/data'
 
 interface Props { formateur: Formateur; onClose: () => void }
 
@@ -29,6 +29,7 @@ export default function EditFormateurModal({ formateur, onClose }: Props) {
   const [type, setType] = useState<'principal' | 'masterclass'>(formateur.type)
   const [statut, setStatut] = useState<'verified' | 'contact'>(formateur.statut)
   const [tarifHoraire, setTarifHoraire] = useState(formateur.tarifHoraire?.toString() || '')
+  const [liens, setLiens] = useState<FormateurLien[]>(formateur.liens || [])
 
   const toggleSpec = (s: string) => {
     setSpecs(prev => prev.includes(s) ? prev.filter(x => x !== s) : [...prev, s])
@@ -41,7 +42,8 @@ export default function EditFormateurModal({ formateur, onClose }: Props) {
   const handleSubmit = () => {
     if (!nom) { showToast('Nom requis'); return }
     if (finalSpecs.length === 0) { showToast('Au moins une spécialité requise'); return }
-    updateFormateur(formateur.id, { nom, spec: finalSpecs, email, tel, type, statut, tarifHoraire: tarifHoraire ? parseFloat(tarifHoraire) : undefined })
+    const cleanLiens = liens.filter(l => l.label.trim() && l.url.trim())
+    updateFormateur(formateur.id, { nom, spec: finalSpecs, email, tel, type, statut, tarifHoraire: tarifHoraire ? parseFloat(tarifHoraire) : undefined, liens: cleanLiens })
     showToast('Formateur mis à jour')
     onClose()
   }
@@ -116,6 +118,48 @@ export default function EditFormateurModal({ formateur, onClose }: Props) {
             <div className="form-group">
               <label className="form-label">Tarif horaire <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--text-tertiary)', fontSize: 11 }}>— € HT / heure</span></label>
               <input type="number" className="form-input" value={tarifHoraire} onChange={e => setTarifHoraire(e.target.value)} placeholder="ex. 120" min="0" />
+            </div>
+          </div>
+
+          {/* Liens personnalisés */}
+          <div className="form-row">
+            <div className="form-group">
+              <label className="form-label">Liens personnalisés <span style={{ fontWeight: 400, textTransform: 'none', color: 'var(--text-tertiary)', fontSize: 11 }}>— visibles sur l'espace formateur</span></label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 4 }}>
+                {liens.map((l, i) => (
+                  <div key={i} style={{ display: 'flex', gap: 6, alignItems: 'center' }}>
+                    <input
+                      className="form-input"
+                      value={l.label}
+                      onChange={e => { const u = [...liens]; u[i] = { ...u[i], label: e.target.value }; setLiens(u) }}
+                      placeholder="Nom du lien"
+                      style={{ flex: 1 }}
+                    />
+                    <input
+                      className="form-input"
+                      value={l.url}
+                      onChange={e => { const u = [...liens]; u[i] = { ...u[i], url: e.target.value }; setLiens(u) }}
+                      placeholder="https://…"
+                      style={{ flex: 2 }}
+                    />
+                    <button
+                      type="button"
+                      className="btn btn-sm"
+                      onClick={() => setLiens(liens.filter((_, j) => j !== i))}
+                      style={{ flexShrink: 0, color: 'var(--red)' }}
+                    >✕</button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  className="btn btn-sm"
+                  onClick={() => setLiens([...liens, { label: '', url: '' }])}
+                  style={{ alignSelf: 'flex-start' }}
+                >
+                  <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v10M3 8h10"/></svg>
+                  Ajouter un lien
+                </button>
+              </div>
             </div>
           </div>
 

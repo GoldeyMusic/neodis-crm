@@ -170,7 +170,9 @@ function FormateurPanel({ formateur: f, onClose, onEdit }: {
   const photoRef = useRef<HTMLInputElement>(null)
   const cvRef = useRef<HTMLInputElement>(null)
   const [viewer, setViewer] = useState<{ name: string; data: string } | null>(null)
+  const [linkCopied, setLinkCopied] = useState(false)
   const initials = f.nom.split(' ').map((n: string) => n[0]).join('').slice(0, 2).toUpperCase()
+  const portalUrl = typeof window !== 'undefined' ? `${window.location.origin}/formateur/${f.token}` : ''
 
   const handlePhoto = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -342,6 +344,43 @@ function FormateurPanel({ formateur: f, onClose, onEdit }: {
                 </div>
               </div>
             </div>
+
+            {/* Lien portail formateur */}
+            {f.token && (
+              <div style={{ marginTop: 20 }}>
+                <div className="section-label" style={{ marginBottom: 10 }}>Espace formateur</div>
+                <div className="card" style={{ padding: '14px 18px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    <div style={{ width: 36, height: 36, borderRadius: 8, background: '#F0FDF4', border: '1px solid #BBF7D0', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, fontSize: 16 }}>🌐</div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: 13, fontWeight: 500 }}>Portail personnel</div>
+                      <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontFamily: 'DM Mono' }}>
+                        /formateur/{f.token?.slice(0, 8)}…
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
+                      <button className="btn btn-sm" onClick={() => {
+                        navigator.clipboard.writeText(portalUrl)
+                        setLinkCopied(true)
+                        showToast('Lien copié !')
+                        setTimeout(() => setLinkCopied(false), 2000)
+                      }}>
+                        {linkCopied ? '✓ Copié' : (
+                          <>
+                            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="5" y="5" width="9" height="9" rx="1.5"/><path d="M5 11H3.5A1.5 1.5 0 0 1 2 9.5v-7A1.5 1.5 0 0 1 3.5 1h7A1.5 1.5 0 0 1 12 2.5V5"/></svg>
+                            Copier le lien
+                          </>
+                        )}
+                      </button>
+                      <a href={portalUrl} target="_blank" rel="noopener noreferrer" className="btn btn-sm btn-primary" style={{ textDecoration: 'none' }}>
+                        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6 3h7v7M13 3L6 10"/></svg>
+                        Ouvrir
+                      </a>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>

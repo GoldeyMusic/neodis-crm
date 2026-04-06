@@ -61,6 +61,11 @@ export interface Participant {
   initials: string
 }
 
+export interface FormateurLien {
+  label: string
+  url: string
+}
+
 export interface Formateur {
   id: number
   nom: string
@@ -72,6 +77,8 @@ export interface Formateur {
   tel: string
   statut: 'verified' | 'contact'
   type: 'principal' | 'masterclass'
+  token?: string                // token unique pour l'espace formateur public
+  liens?: FormateurLien[]       // liens personnalisés (umani.town, etc.)
 }
 
 export interface MembreEquipe {
