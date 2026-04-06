@@ -251,12 +251,17 @@ export function CRMProvider({ children }: { children: ReactNode }) {
     // Upload si base64 (pas déjà une URL)
     if (isBase64(d.data)) {
       fileUrl = await fileSave(`doc_${id}`, d.data)
+      // Si l'upload échoue, on bloque l'enregistrement et on alerte
+      if (!fileUrl) {
+        showToast(`❌ Échec de l'upload de "${d.nom}" — réessaie dans quelques secondes`)
+        return
+      }
     }
 
     const newDoc: Document = { ...d, id, data: fileUrl }
     setDocuments(prev => [newDoc, ...prev])
     logActivity('↑', `Document <strong>${d.nom}</strong> uploadé`)
-  }, [logActivity])
+  }, [logActivity, showToast])
 
   const updateDocument = useCallback((id: number, updates: Partial<Document>) => {
     setDocuments(prev => prev.map(d => d.id === id ? { ...d, ...updates } : d))
