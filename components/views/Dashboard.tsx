@@ -138,18 +138,25 @@ export default function Dashboard() {
   const statusLabel: Record<string, string> = { active: 'En cours', done: 'Terminée', upcoming: 'À venir' }
 
   // ── Documents manquants par session ──
-  const REQUIRED_CATS = [
-    { cat: 'factures_financeurs', label: 'Factures financeurs' },
-    { cat: 'factures_formateurs', label: 'Factures formateurs' },
-    { cat: 'presence',            label: 'Feuilles de présence' },
-    { cat: 'bilans',              label: 'Bilans' },
-  ]
+  // Prest@ppli = formation collective → pas de bilans individuels
+  const getRequiredCats = (s: Session) => {
+    const base = [
+      { cat: 'factures_financeurs', label: 'Factures financeurs' },
+      { cat: 'factures_formateurs', label: 'Factures formateurs' },
+      { cat: 'presence',            label: 'Feuilles de présence' },
+    ]
+    if (s.typeFT !== 'Prest@ppli') {
+      base.push({ cat: 'bilans', label: 'Bilans' })
+    }
+    return base
+  }
 
   const docAlerts = useMemo(() => {
     return sessions.map(s => {
       const sessionDocs = documents.filter(d => d.session?.split(' | ').includes(s.name))
-      const missing = REQUIRED_CATS.filter(req => !sessionDocs.some(d => d.cat === req.cat))
-      const total = REQUIRED_CATS.length
+      const required = getRequiredCats(s)
+      const missing = required.filter(req => !sessionDocs.some(d => d.cat === req.cat))
+      const total = required.length
       const done = total - missing.length
       return { session: s, missing, done, total }
     }).filter(a => a.missing.length > 0)

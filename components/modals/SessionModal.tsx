@@ -6,12 +6,18 @@ import ParticipantModal from './ParticipantModal'
 import DocumentViewer from '../ui/DocumentViewer'
 
 /* ── Documents attendus par session ── */
-const REQUIRED_DOC_CATS = [
-  { cat: 'factures_financeurs', label: 'Factures financeurs', icon: '💰' },
-  { cat: 'factures_formateurs', label: 'Factures formateurs', icon: '🧾' },
-  { cat: 'presence',            label: 'Feuilles de présence', icon: '✅' },
-  { cat: 'bilans',              label: 'Bilans',               icon: '📊' },
-]
+// Prest@ppli = formation collective → pas de bilans individuels
+function getRequiredDocCats(session: Session) {
+  const base = [
+    { cat: 'factures_financeurs', label: 'Factures financeurs' },
+    { cat: 'factures_formateurs', label: 'Factures formateurs' },
+    { cat: 'presence',            label: 'Feuilles de présence' },
+  ]
+  if (session.typeFT !== 'Prest@ppli') {
+    base.push({ cat: 'bilans', label: 'Bilans' })
+  }
+  return base
+}
 
 interface Props { session: Session; onClose: () => void }
 
@@ -255,7 +261,8 @@ function DocCompletenessBlock({ session, onGoToDocs }: { session: Session; onGoT
   const { documents } = useCRM()
   const sessionDocs = documents.filter(d => d.session?.split(' | ').includes(session.name))
 
-  const status = REQUIRED_DOC_CATS.map(req => {
+  const requiredCats = getRequiredDocCats(session)
+  const status = requiredCats.map(req => {
     const count = sessionDocs.filter(d => d.cat === req.cat).length
     return { ...req, count, ok: count > 0 }
   })
