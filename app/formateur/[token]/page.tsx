@@ -266,7 +266,7 @@ function RecapTab({ data }: { data: PortalData }) {
                   <span className={`status-pill ${s.status}`}>{statusLabels[s.status] ?? s.status}</span>
                 </div>
               </div>
-              <div style={{ display: 'flex', gap: 16, flexWrap: 'wrap' }}>
+              <div className="portal-detail-grid">
                 <div className="portal-detail">
                   <div className="portal-detail-label">Module</div>
                   <div className="portal-detail-value">{p.module}</div>
