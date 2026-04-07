@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useCRM } from '@/lib/store'
 import Login from './Login'
 import Topbar from './layout/Topbar'
@@ -24,8 +24,11 @@ const WARNING_BEFORE = 2 * 60 * 1000 // 2min
 export default function CRMApp() {
   const { user, logout, activeView, setActiveView } = useCRM()
   const [showWarning, setShowWarning] = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
   const inactivityTimer = useRef<NodeJS.Timeout>()
   const warningTimer = useRef<NodeJS.Timeout>()
+
+  const closeSidebar = useCallback(() => setSidebarOpen(false), [])
 
   const resetTimer = () => {
     clearTimeout(inactivityTimer.current)
@@ -59,9 +62,10 @@ export default function CRMApp() {
 
   return (
     <div className="app-shell">
-      <Topbar />
+      <Topbar onMenuToggle={() => setSidebarOpen(o => !o)} />
       <div className="body-area">
-        <Sidebar />
+        {sidebarOpen && <div className="sidebar-overlay" onClick={closeSidebar} />}
+        <Sidebar open={sidebarOpen} onNavClick={closeSidebar} />
         <main className="main-content">
           <div style={{ display: v === 'dashboard'    ? undefined : 'none' }}><Dashboard /></div>
           <div style={{ display: v === 'sessions'     ? undefined : 'none' }}><Sessions /></div>

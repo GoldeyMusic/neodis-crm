@@ -3,7 +3,7 @@ import { useState } from 'react'
 import { useCRM } from '@/lib/store'
 import ProfileModal from '../modals/ProfileModal'
 
-export default function Topbar() {
+export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) {
   const { user } = useCRM()
   const [profileOpen, setProfileOpen] = useState(false)
 
@@ -12,9 +12,12 @@ export default function Topbar() {
   return (
     <>
       <header className="topbar">
+        <button className="hamburger-btn" onClick={onMenuToggle} aria-label="Menu">
+          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+        </button>
         <a className="topbar-logo" href="#">UMA<span>NI</span></a>
-        <span style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
-        <span style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>by NEODIS</span>
+        <span className="topbar-sep" style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
+        <span className="topbar-byline" style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>by NEODIS</span>
         <div className="topbar-spacer" />
         <div className="topbar-search-wrap">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: .4, flexShrink: 0 }}><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
