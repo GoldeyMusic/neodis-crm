@@ -15,7 +15,10 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
         <button className="hamburger-btn" onClick={onMenuToggle} aria-label="Menu">
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
         </button>
-        <a className="topbar-logo" href="#" onClick={e => { e.preventDefault(); setActiveView('dashboard') }} style={{ cursor: 'pointer' }}>UMA<span>NI</span></a>
+        <a className="topbar-logo" href="#" onClick={e => { e.preventDefault(); setActiveView('dashboard') }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <img src="/umani-logo.svg" alt="UMANI" style={{ height: 28 }} />
+          UMA<span>NI</span>
+        </a>
         <span className="topbar-sep" style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
         <span className="topbar-byline" style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>by NEODIS</span>
         <div className="topbar-spacer" />

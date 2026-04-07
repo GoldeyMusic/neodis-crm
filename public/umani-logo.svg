@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" fill="none">
+  <!-- Left stroke: goes down, curves right at bottom -->
+  <path d="M30 12 L30 72 Q30 100 58 100 L62 100 Q78 100 78 78 L78 48"
+    stroke="#86EFAC" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Right stroke: goes up from bottom, curves at top -->
+  <path d="M90 108 L90 48 Q90 20 62 20 L58 20 Q42 20 42 42 L42 72"
+    stroke="#86EFAC" stroke-width="14" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>
