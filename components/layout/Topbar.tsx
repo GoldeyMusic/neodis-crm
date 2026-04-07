@@ -24,7 +24,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
         <div className="topbar-spacer" />
         <div className="topbar-search-wrap">
           <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ opacity: .4, flexShrink: 0 }}><circle cx="7" cy="7" r="5"/><path d="M11 11l3 3"/></svg>
-          <input placeholder="Recherche… (⌘K)" />
+          <input placeholder="Recherche…" />
         </div>
         <div className="topbar-user" onClick={() => setProfileOpen(true)}>
           <div className="avatar">
