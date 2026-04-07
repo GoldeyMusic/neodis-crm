@@ -71,7 +71,8 @@ export default function Dashboard() {
   const miniNext = () => { if (miniMonth === 11) { setMiniMonth(0); setMiniYear(y => y + 1) } else setMiniMonth(m => m + 1) }
 
   const active = sessions.filter(s => s.status === 'active').length
-  const total = participants.length
+  const activeParticipants = participants.filter(p => p.assiduite !== 'abandonne' && p.assiduite !== 'jamais_presente')
+  const total = activeParticipants.length
   const done = sessions.filter(s => s.status === 'done').length
   const upcoming = sessions.filter(s => s.status === 'upcoming').length
 
@@ -191,7 +192,7 @@ export default function Dashboard() {
         <div className="kpi-card animate-in" onClick={() => setActiveView('participants')}>
           <div className="kpi-label">Participants total</div>
           <div className="kpi-value">{total}</div>
-          <div className="kpi-meta">Tous statuts confondus</div>
+          <div className="kpi-meta">Hors abandons et absents</div>
         </div>
         <div className="kpi-card animate-in">
           <div className="kpi-label">Checklist en retard</div>
