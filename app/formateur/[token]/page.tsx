@@ -121,7 +121,7 @@ export default function FormateurPortal({ params }: { params: { token: string } 
           </button>
           <span className="portal-logo" onClick={() => setActiveTab('recap')} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
             <img src="/umani-logo.svg" alt="UMANI" style={{ height: 28 }} />
-            UMA<span style={{ color: 'var(--text-tertiary)' }}>NI</span>
+            <span>UMA<span style={{ color: 'var(--text-tertiary)' }}>NI</span></span>
           </span>
           <span className="portal-sep" style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
           <span className="portal-byline">Espace formateur</span>
