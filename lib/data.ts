@@ -84,7 +84,7 @@ export interface Formateur {
   cv?: { name: string; data: string; size: string; cat?: string }
   email: string
   tel: string
-  statut: 'verified' | 'contact'
+  statut: 'verified' | 'contact' | 'inactif'
   type: 'principal' | 'masterclass'
   token?: string                // token unique pour l'espace formateur public
   liens?: FormateurLien[]       // liens personnalisés (umani.town, etc.)
@@ -124,6 +124,7 @@ export const sessionsData: Session[] = [
     sheetGid: '0',
     planning: [
       { formateurId: 3, heures: 3.5, module: "Identité d'artiste" },
+      { formateurId: 8, heures: 3.5, module: 'Branding (J1 après-midi)', tarifOverride: 80 },
       { formateurId: 1, heures: 7,   module: 'Streaming (J2 + J4 matin)', tarifOverride: 80 },
       { formateurId: 5, heures: 14,  module: 'MAO (J2 à J5 après-midi)' },
       { formateurId: 4, heures: 3.5, module: 'Marketing musical (J3 matin)' },
@@ -222,6 +223,7 @@ export const formateursData: Formateur[] = [
   { id: 5, nom: 'Alexandre de Beauregard',  spec: ['MAO'],                   email: 'alexandre.de.beauregard@gmail.com', tel: '07 86 63 76 11',    statut: 'verified', type: 'principal'   },
   { id: 6, nom: 'Emmanuelle Bruch',         spec: ['Droits'],                email: 'emmanuelle.bruch@sacem.fr',         tel: '05 96 69 61 88 752',statut: 'verified', type: 'masterclass' },
   { id: 7, nom: 'Freddy Chellaoui',         spec: ['Écriture'],              email: 'freddyspherebooking@gmail.com',     tel: '06 74 67 57 57',    statut: 'verified', type: 'masterclass' },
+  { id: 8, nom: 'Junior Makasi',            spec: ['Branding'],              email: '',                                  tel: '',                  statut: 'inactif',  type: 'principal'   },
 ]
 
 // ── PARCOURS PÉDAGOGIQUE (18 étapes) ──

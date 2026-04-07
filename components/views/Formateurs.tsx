@@ -140,7 +140,7 @@ function FormateurCard({ f, onClick }: { f: Formateur; onClick: () => void }) {
         <div style={{ minWidth: 0 }}>
           <div style={{ fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{f.nom}</div>
           <div style={{ display: 'flex', gap: 4, marginTop: 4, flexWrap: 'wrap' }}>
-            <span className={`tag tag-${f.statut}`} style={{ display: 'inline-flex' }}>{f.statut === 'verified' ? '✓ Vérifié' : 'À contacter'}</span>
+            <span className={`tag tag-${f.statut}`} style={{ display: 'inline-flex' }}>{f.statut === 'verified' ? '✓ Vérifié' : f.statut === 'inactif' ? 'Inactif' : 'À contacter'}</span>
             {f.cv && <span className="tag" style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', fontSize: 10 }}>📄 CV</span>}
           </div>
         </div>
@@ -227,7 +227,7 @@ function FormateurPanel({ formateur: f, onClose, onEdit }: {
                   ))}
                 </div>
                 <div style={{ marginTop: 8, display: 'flex', gap: 6, alignItems: 'center' }}>
-                  <span className={`tag tag-${f.statut}`}>{f.statut === 'verified' ? '✓ Vérifié' : 'À contacter'}</span>
+                  <span className={`tag tag-${f.statut}`}>{f.statut === 'verified' ? '✓ Vérifié' : f.statut === 'inactif' ? 'Inactif' : 'À contacter'}</span>
                   <span className="tag" style={{ background: 'var(--surface-2)', color: 'var(--text-tertiary)', border: '1px solid var(--border)' }}>
                     {f.type === 'principal' ? 'Formateur principal' : 'Masterclass'}
                   </span>
