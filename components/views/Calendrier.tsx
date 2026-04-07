@@ -411,9 +411,9 @@ export default function Calendrier() {
           return (
             <div className="cal-details animate-in">
               <div className="card">
-                <div className="card-header">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
                   <div className="card-title" style={{ textTransform: 'capitalize' }}>{dayLabel}</div>
-                  <button className="card-action" onClick={() => setSelectedDay(null)}>Fermer</button>
+                  <button onClick={() => setSelectedDay(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-tertiary)', fontSize: 12 }}>Fermer</button>
                 </div>
                 {daySes.map(({ session, color }) => {
                   const dayData = dayMaps.get(session.id)?.get(dayKey)
