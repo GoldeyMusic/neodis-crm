@@ -118,7 +118,32 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         ])
 
         // Remplacer le seed par les données Supabase si elles existent
-        if (dbSessions.length > 0) setSessions(dbSessions)
+        if (dbSessions.length > 0) {
+          // Migration : ajouter Junior Makasi + tarifOverride sur session oct 2025
+          let sessionsMigrated = false
+          const migratedSessions = dbSessions.map(s => {
+            if (s.id === 50 && s.planning) {
+              let planning = [...s.planning]
+              // Ajouter Junior Makasi s'il n'est pas dans le planning
+              if (!planning.find(p => p.formateurId === 8)) {
+                planning = [{ formateurId: 8, heures: 3.5, module: 'Branding (J1 après-midi)', tarifOverride: 80 }, ...planning]
+                sessionsMigrated = true
+              }
+              // Ajouter tarifOverride 80 pour Abdelhak sur cette session
+              if (planning.find(p => p.formateurId === 1 && !p.tarifOverride)) {
+                planning = planning.map(p => p.formateurId === 1 ? { ...p, tarifOverride: 80 } : p)
+                sessionsMigrated = true
+              }
+              return { ...s, planning }
+            }
+            return s
+          })
+          setSessions(migratedSessions)
+          if (sessionsMigrated) {
+            console.log('[store] Migration: updated oct 2025 session planning')
+            upsertAll('sessions', migratedSessions)
+          }
+        }
         if (dbParticipants.length > 0) {
           const filtered = dbParticipants.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id))
           // Migration : appliquer OPCO validé + suivi complet par défaut
@@ -139,10 +164,15 @@ export function CRMProvider({ children }: { children: ReactNode }) {
           const chars = 'abcdefghijkmnpqrstuvwxyz23456789'
           const mkToken = () => { let t = ''; for (let i = 0; i < 12; i++) t += chars[Math.floor(Math.random() * chars.length)]; return t }
           const needsMigration = dbFormateurs.some(f => !f.token)
-          const migrated = dbFormateurs.map(f => f.token ? f : { ...f, token: mkToken() })
+          let migrated = dbFormateurs.map(f => f.token ? f : { ...f, token: mkToken() })
+          // Migration : ajouter Junior Makasi (inactif) s'il n'existe pas
+          if (!migrated.find(f => f.id === 8)) {
+            const juniorMakasi: Formateur = { id: 8, nom: 'Junior Makasi', spec: ['Branding'], email: '', tel: '', statut: 'inactif', type: 'principal', token: mkToken() }
+            migrated = [...migrated, juniorMakasi]
+            console.log('[store] Migration: adding Junior Makasi (inactive)')
+          }
           setFormateurs(migrated)
-          // Persister immédiatement si des tokens ont été générés
-          if (needsMigration) {
+          if (needsMigration || !dbFormateurs.find(f => f.id === 8)) {
             console.log('[store] Migrating formateur tokens → Supabase')
             upsertAll('formateurs', migrated)
           }
