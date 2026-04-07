@@ -287,7 +287,7 @@ export default function Dashboard() {
                   <span className={`tag tag-${s.duree.replace('h', 'h')}`}>{s.duree}</span>
                 </div>
               </div>
-              <span className="session-participants">{s.participants} participants</span>
+              <span className="session-participants">{participants.filter(p => p.session === s.name && p.assiduite !== 'abandonne' && p.assiduite !== 'jamais_presente').length} participants</span>
             </div>
           ))}
         </div>
