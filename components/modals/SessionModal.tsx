@@ -547,7 +547,7 @@ function BudgetTab({ session }: { session: Session }) {
 
   const rows = session.planning.map(entry => {
     const formateur = formateurs.find(f => f.id === entry.formateurId)
-    const tarif = formateur?.tarifHoraire ?? null
+    const tarif = entry.tarifOverride ?? formateur?.tarifHoraire ?? null
     const total = tarif !== null ? tarif * entry.heures : null
     return { formateur, entry, tarif, total }
   })
@@ -606,7 +606,31 @@ function BudgetTab({ session }: { session: Session }) {
         </div>
         <div style={{ textAlign: 'center', fontFamily: 'DM Mono', fontSize: 13 }}>{entry.heures}h</div>
         <div style={{ textAlign: 'center', fontFamily: 'DM Mono', fontSize: 13, color: isManquant ? 'var(--text-tertiary)' : 'var(--text-primary)' }}>
-          {isManquant ? <span style={{ fontSize: 11, color: '#D97706' }}>À renseigner</span> : `${tarif} €`}
+          <input
+            type="number"
+            defaultValue={tarif ?? ''}
+            placeholder="—"
+            onBlur={e => {
+              const val = e.target.value.trim()
+              const newTarif = val ? parseFloat(val) : undefined
+              if (!session.planning) return
+              const updated = session.planning.map(p =>
+                p.formateurId === entry.formateurId && p.module === entry.module
+                  ? { ...p, tarifOverride: newTarif }
+                  : p
+              )
+              updateSession(session.id, { planning: updated })
+            }}
+            onKeyDown={e => { if (e.key === 'Enter') (e.target as HTMLInputElement).blur() }}
+            style={{
+              width: 52, textAlign: 'center', fontFamily: 'DM Mono', fontSize: 13,
+              border: entry.tarifOverride != null ? '1px solid #93C5FD' : '1px solid var(--border)',
+              borderRadius: 6, padding: '2px 4px',
+              background: entry.tarifOverride != null ? '#EFF6FF' : 'transparent',
+              color: isManquant ? '#D97706' : 'var(--text-primary)',
+            }}
+            title={entry.tarifOverride != null ? `Tarif session (global: ${formateur?.tarifHoraire ?? '—'} €/h)` : 'Tarif global du formateur'}
+          />
         </div>
         <div style={{ textAlign: 'right', fontFamily: 'DM Mono', fontSize: 13, fontWeight: total !== null ? 600 : 400, color: total !== null ? 'var(--text-primary)' : 'var(--text-tertiary)' }}>
           {total !== null ? `${total.toLocaleString('fr-FR')} €` : '—'}

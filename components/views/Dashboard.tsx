@@ -82,12 +82,12 @@ export default function Dashboard() {
   const budgetTotal = sessions.reduce((sum, s) => {
     if (!s.planning) return sum
     return sum + s.planning.reduce((ssum, entry) => {
-      const tarif = formateurs.find(f => f.id === entry.formateurId)?.tarifHoraire ?? 0
+      const tarif = entry.tarifOverride ?? formateurs.find(f => f.id === entry.formateurId)?.tarifHoraire ?? 0
       return ssum + tarif * entry.heures
     }, 0)
   }, 0)
   const budgetPartiels = sessions.some(s =>
-    s.planning?.some(e => !formateurs.find(f => f.id === e.formateurId)?.tarifHoraire)
+    s.planning?.some(e => e.tarifOverride == null && !formateurs.find(f => f.id === e.formateurId)?.tarifHoraire)
   )
 
   // CA facturé : logique différenciée par type de financement

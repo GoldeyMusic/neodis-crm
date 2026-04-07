@@ -21,6 +21,7 @@ export interface PlanningEntry {
   formateurId: number
   heures: number
   module: string
+  tarifOverride?: number               // tarif horaire spécifique à cette session (prioritaire sur le tarif global du formateur)
   paiement?: 'en_attente' | 'paye'   // suivi paiement formateur
   paiementDate?: string               // date du règlement (ISO ou FR)
 }
@@ -123,7 +124,7 @@ export const sessionsData: Session[] = [
     sheetGid: '0',
     planning: [
       { formateurId: 3, heures: 3.5, module: "Identité d'artiste" },
-      { formateurId: 1, heures: 7,   module: 'Streaming (J2 + J4 matin)' },
+      { formateurId: 1, heures: 7,   module: 'Streaming (J2 + J4 matin)', tarifOverride: 80 },
       { formateurId: 5, heures: 14,  module: 'MAO (J2 à J5 après-midi)' },
       { formateurId: 4, heures: 3.5, module: 'Marketing musical (J3 matin)' },
       { formateurId: 2, heures: 3.5, module: 'Marketing avancé (J5 matin)' },

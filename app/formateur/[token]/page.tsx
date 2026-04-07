@@ -191,9 +191,9 @@ function RecapTab({ data }: { data: PortalData }) {
   const totalHeures = filtered.reduce((sum, s) => sum + s.planning.heures, 0)
   const enAttente = filtered.filter(s => s.planning.paiement !== 'paye')
   const paye = filtered.filter(s => s.planning.paiement === 'paye')
-  const montantEnAttente = f.tarifHoraire ? enAttente.reduce((sum, s) => sum + s.planning.heures, 0) * f.tarifHoraire : 0
-  const montantPaye = f.tarifHoraire ? paye.reduce((sum, s) => sum + s.planning.heures, 0) * f.tarifHoraire : 0
-  const montantTotal = f.tarifHoraire ? totalHeures * f.tarifHoraire : 0
+  const montantEnAttente = enAttente.reduce((sum, s) => { const t = s.planning.tarifOverride ?? f.tarifHoraire ?? 0; return sum + s.planning.heures * t }, 0)
+  const montantPaye = paye.reduce((sum, s) => { const t = s.planning.tarifOverride ?? f.tarifHoraire ?? 0; return sum + s.planning.heures * t }, 0)
+  const montantTotal = filtered.reduce((sum, s) => { const t = s.planning.tarifOverride ?? f.tarifHoraire ?? 0; return sum + s.planning.heures * t }, 0)
 
   const hasFilters = years.length > 1 || sessions.some(s => s.session.status !== sessions[0]?.session.status)
 
@@ -266,7 +266,7 @@ function RecapTab({ data }: { data: PortalData }) {
       )}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
         {filtered.map(({ session: s, planning: p }) => {
-          const montant = f.tarifHoraire ? p.heures * f.tarifHoraire : null
+          const montant = (p.tarifOverride ?? f.tarifHoraire) ? p.heures * (p.tarifOverride ?? f.tarifHoraire!) : null
           const isPaid = p.paiement === 'paye'
           return (
             <div key={s.id} className="portal-card">
