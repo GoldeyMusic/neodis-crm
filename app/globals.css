@@ -84,6 +84,7 @@ html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--b
 .tag-60h { background: #FFF7ED; color: #C2410C; border: 1px solid #FED7AA; }
 .tag-verified { background: var(--green-bg); color: #16A34A; border: 1px solid #BBF7D0; }
 .tag-contact { background: var(--warn-bg); color: var(--warn); border: 1px solid #FDE68A; }
+.tag-inactif { background: var(--surface-2); color: var(--text-tertiary); border: 1px solid var(--border); }
 
 /* ── STATUS PILLS ── */
 .status-pill { display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 500; font-family: 'DM Mono', monospace; }

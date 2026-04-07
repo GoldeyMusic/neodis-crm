@@ -27,7 +27,7 @@ export default function EditFormateurModal({ formateur, onClose }: Props) {
   const [email, setEmail] = useState(formateur.email)
   const [tel, setTel] = useState(formateur.tel)
   const [type, setType] = useState<'principal' | 'masterclass'>(formateur.type)
-  const [statut, setStatut] = useState<'verified' | 'contact'>(formateur.statut)
+  const [statut, setStatut] = useState<'verified' | 'contact' | 'inactif'>(formateur.statut)
   const [tarifHoraire, setTarifHoraire] = useState(formateur.tarifHoraire?.toString() || '')
   const [liens, setLiens] = useState<FormateurLien[]>(formateur.liens || [])
 
@@ -176,6 +176,7 @@ export default function EditFormateurModal({ formateur, onClose }: Props) {
               <select className="form-input" value={statut} onChange={e => setStatut(e.target.value as any)}>
                 <option value="verified">Vérifié</option>
                 <option value="contact">À contacter</option>
+                <option value="inactif">Inactif</option>
               </select>
             </div>
           </div>
