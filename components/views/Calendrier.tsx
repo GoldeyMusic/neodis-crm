@@ -390,7 +390,7 @@ export default function Calendrier() {
                               )}
                               {dayData.soir.length > 0 && (
                                 <div className="cal-slot">
-                                  <span className="cal-slot-period" style={{ color: '#7C3AED' }}>SO</span>
+                                  <span className="cal-slot-period">SO</span>
                                   {dayData.soir.map((s, i) => (
                                     <span key={i} className="cal-slot-entry" style={{ color: color.text }}>
                                       {s.module} <span className="cal-slot-fmtr">{fmtShort(s.formateurId)}</span>

@@ -501,7 +501,7 @@ function CalendrierTab({ data }: { data: PortalData }) {
                             )}
                             {dayData.soir.length > 0 && (
                               <div className="cal-slot">
-                                <span className="cal-slot-period" style={{ color: '#7C3AED' }}>SO</span>
+                                <span className="cal-slot-period">SO</span>
                                 {dayData.soir.map((s, i) => (
                                   <span key={i} className="cal-slot-entry" style={{ color: color.text }}>
                                     {s.module} {s.formateurId === f.id && <span className="cal-slot-fmtr" style={{ background: color.bg, color: color.text, border: `1px solid ${color.border}`, borderRadius: 4, padding: '0 3px', fontSize: 8 }}>Moi</span>}
