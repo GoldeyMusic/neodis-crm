@@ -1,20 +1,45 @@
 'use client'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { useCRM } from '@/lib/store'
 import { Participant } from '@/lib/data'
 import ParticipantModal from '../modals/ParticipantModal'
+
+type SortKey = 'nom' | 'nomArtiste' | 'session' | 'tel' | 'titreSingle'
+type SortDir = 'asc' | 'desc'
 
 export default function Participants() {
   const { participants, sessions, showToast } = useCRM()
   const [selected, setSelected] = useState<Participant | null>(null)
   const [search, setSearch] = useState('')
   const [filterSession, setFilterSession] = useState('all')
+  const [sortKey, setSortKey] = useState<SortKey>('nom')
+  const [sortDir, setSortDir] = useState<SortDir>('asc')
 
-  const filtered = participants.filter(p => {
-    const matchSession = filterSession === 'all' || p.session === filterSession
-    const matchSearch = !search || p.nom.toLowerCase().includes(search.toLowerCase()) || p.nomArtiste.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase())
-    return matchSession && matchSearch
-  })
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setSortDir('asc') }
+  }
+
+  const filtered = useMemo(() => {
+    const list = participants.filter(p => {
+      const matchSession = filterSession === 'all' || p.session === filterSession
+      const matchSearch = !search || p.nom.toLowerCase().includes(search.toLowerCase()) || p.nomArtiste.toLowerCase().includes(search.toLowerCase()) || p.email.toLowerCase().includes(search.toLowerCase())
+      return matchSession && matchSearch
+    })
+    const mult = sortDir === 'asc' ? 1 : -1
+    return list.sort((a, b) => {
+      const va = (a[sortKey] || '—').toLowerCase()
+      const vb = (b[sortKey] || '—').toLowerCase()
+      return va < vb ? -1 * mult : va > vb ? 1 * mult : 0
+    })
+  }, [participants, filterSession, search, sortKey, sortDir])
+
+  const sortIcon = (key: SortKey) => {
+    if (sortKey !== key) return <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.5" style={{ marginLeft: 4, opacity: 0.4 }}><path d="M3 4l2-2 2 2M3 6l2 2 2-2"/></svg>
+    return sortDir === 'asc'
+      ? <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginLeft: 4 }}><path d="M3 6l2-2 2 2"/></svg>
+      : <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ marginLeft: 4 }}><path d="M3 4l2 2 2-2"/></svg>
+  }
 
   return (
     <div>
@@ -48,11 +73,21 @@ export default function Participants() {
         <table className="data-table">
           <thead>
             <tr>
-              <th>Nom civil</th>
-              <th>Nom d'artiste</th>
-              <th>Session</th>
-              <th>Téléphone</th>
-              <th>Single</th>
+              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('nom')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Nom civil{sortIcon('nom')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('nomArtiste')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Nom d'artiste{sortIcon('nomArtiste')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('session')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Session{sortIcon('session')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('tel')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Téléphone{sortIcon('tel')}</span>
+              </th>
+              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('titreSingle')}>
+                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Single{sortIcon('titreSingle')}</span>
+              </th>
               <th></th>
             </tr>
           </thead>
