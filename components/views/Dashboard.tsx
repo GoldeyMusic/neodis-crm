@@ -129,7 +129,7 @@ export default function Dashboard() {
   const prevParticipants = participants.filter(p => prevSessionNames.has(p.session))
   const caPrevisionnel   = prevSessions.reduce((total, s) => {
     if (s.typeFT === 'Prest@ppli') return total + (s.montantCA ?? 0)
-    const nb = participants.filter(p => p.session === s.name).length
+    const nb = participants.filter(p => p.session === s.name && p.opcoStatus !== 'refuse' && p.assiduite !== 'abandonne' && p.assiduite !== 'jamais_presente').length
     return total + nb * TARIF_AIF
   }, 0)
 
