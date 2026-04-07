@@ -33,6 +33,7 @@ export default function SessionModal({ session: sessionProp, onClose }: Props) {
   const session = sessions.find(s => s.id === sessionProp.id) ?? sessionProp
 
   const sessionParticipants = participants.filter(p => p.session === session.name)
+  const activeParticipants = sessionParticipants.filter(p => p.assiduite !== 'abandonne' && p.assiduite !== 'jamais_presente')
 
   // Factures financeurs liées à cette session (documents uploadés)
   const sessionFactureDocs = documents.filter(d =>
@@ -108,7 +109,7 @@ export default function SessionModal({ session: sessionProp, onClose }: Props) {
                   <div className="info-block"><div className="info-label">Financeur</div><div className="info-value">{session.financeur}</div></div>
                   <div className="info-block"><div className="info-label">Type</div><div className="info-value">{session.typeFT || '—'}</div></div>
                   <div className="info-block"><div className="info-label">Durée</div><div className="info-value">{session.duree}</div></div>
-                  <div className="info-block"><div className="info-label">Participants</div><div className="info-value">{sessionParticipants.length || session.participants}</div></div>
+                  <div className="info-block"><div className="info-label">Participants</div><div className="info-value">{activeParticipants.length || session.participants}</div></div>
                   <div className="info-block"><div className="info-label">Statut</div><div className="info-value"><span className={`status-pill ${session.status}`}>{statusLabel[session.status]}</span></div></div>
                   <div className="info-block"><div className="info-label">Dates</div><div className="info-value" style={{ fontSize: 13 }}>{session.dates}</div></div>
                 </div>

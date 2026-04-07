@@ -216,7 +216,7 @@ const SESSION_COLORS = [
 /* ── Composant principal ── */
 
 export default function Calendrier() {
-  const { sessions, formateurs } = useCRM()
+  const { sessions, formateurs, participants } = useCRM()
   const [selectedSession, setSelectedSession] = useState<Session | null>(null)
 
   const today = new Date()
@@ -545,7 +545,7 @@ export default function Calendrier() {
                         </div>
                       )}
                     </div>
-                    <span className="session-participants">{session.participants} participants</span>
+                    <span className="session-participants">{participants.filter(p => p.session === session.name && p.assiduite !== 'abandonne' && p.assiduite !== 'jamais_presente').length} participants</span>
                   </div>
                 )
               })}

@@ -44,7 +44,7 @@ export default function Sessions() {
     : []
 
   const SessionRow = ({ s }: { s: Session }) => {
-    const count = participants.filter(p => p.session === s.name).length
+    const count = participants.filter(p => p.session === s.name && p.assiduite !== 'abandonne' && p.assiduite !== 'jamais_presente').length
     return (
       <div key={s.id} className="session-item" onClick={() => setSelected(s)}>
         <div className={`session-dot ${s.status}`} />
