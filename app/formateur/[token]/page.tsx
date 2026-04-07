@@ -119,7 +119,7 @@ export default function FormateurPortal({ params }: { params: { token: string } 
           <button className="portal-hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
           </button>
-          <span className="portal-logo">UMA<span>NI</span></span>
+          <span className="portal-logo" onClick={() => setActiveTab('recap')} style={{ cursor: 'pointer' }}>UMA<span>NI</span></span>
           <span className="portal-sep" style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
           <span className="portal-byline">Espace formateur</span>
           <div style={{ flex: 1 }} />
