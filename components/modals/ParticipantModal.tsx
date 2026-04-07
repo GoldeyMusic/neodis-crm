@@ -146,28 +146,39 @@ export default function ParticipantModal({ participant, onClose }: Props) {
 
           {/* DOCUMENTS */}
           {activeTab === 3 && (() => {
-            // Normalize for fuzzy match: "Ayanah Mouflet" → ["ayanah", "mouflet"]
-            const nameParts = p.nom.toLowerCase().split(/\s+/).filter(w => w.length > 2)
-            const nameNorm = p.nom.toLowerCase().replace(/\s+/g, '').replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u').replace(/[îï]/g, 'i').replace(/[ôö]/g, 'o').replace(/[ç]/g, 'c')
+            const norm = (s: string) => s.toLowerCase().replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u').replace(/[îï]/g, 'i').replace(/[ôö]/g, 'o').replace(/[ç]/g, 'c')
+            // "Ayanah Mouflet" → ["ayanah", "mouflet"]
+            const nameParts = p.nom.split(/\s+/).map(w => norm(w)).filter(w => w.length > 2)
+            // Get the longest part (likely family name) for single-word match
+            const familyName = nameParts.length > 0 ? nameParts.reduce((a, b) => a.length >= b.length ? a : b) : ''
 
             const matchesName = (filename: string) => {
-              const fn = filename.toLowerCase().replace(/[_\-.\s]+/g, '').replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u').replace(/[îï]/g, 'i').replace(/[ôö]/g, 'o').replace(/[ç]/g, 'c')
-              // Full name match (without spaces/separators)
-              if (fn.includes(nameNorm)) return true
-              // All name parts present in filename
-              const fnSpaced = filename.toLowerCase().replace(/[_\-.]+/g, ' ')
-              return nameParts.length >= 2 && nameParts.every(part => fnSpaced.includes(part))
+              const fn = norm(filename.replace(/[_\-.\s]+/g, ' '))
+              // All name parts present
+              if (nameParts.length >= 2 && nameParts.every(part => fn.includes(part))) return true
+              // Full name without spaces
+              const fnStripped = fn.replace(/\s+/g, '')
+              const nameStripped = nameParts.join('')
+              if (nameStripped.length >= 5 && fnStripped.includes(nameStripped)) return true
+              // Family name alone (must be 4+ chars to avoid false positives)
+              if (familyName.length >= 4 && fn.split(/\s+/).some(word => word === familyName)) return true
+              return false
             }
 
             // Direct uploads for this participant
             const directDocs = documents.filter(d => d.participant === p.nom)
-            // Linked from CRM documents (bilans, presence, etc.) by filename match
+            // Linked from CRM documents by filename match
             const linkedDocs = documents.filter(d =>
               d.participant !== p.nom && matchesName(d.nom)
             )
+            // Also include session-level documents (bilans, presence) matching session name
+            const sessionDocs = documents.filter(d =>
+              d.participant !== p.nom && !linkedDocs.find(ld => ld.id === d.id) &&
+              d.session === p.session && ['bilans', 'presence'].includes(d.cat)
+            )
             // Deduplicate
             const seenIds = new Set(directDocs.map(d => d.id))
-            const allDocs = [...directDocs, ...linkedDocs.filter(d => !seenIds.has(d.id))]
+            const allDocs = [...directDocs, ...linkedDocs.filter(d => !seenIds.has(d.id)), ...sessionDocs.filter(d => !seenIds.has(d.id) && !linkedDocs.find(ld => ld.id === d.id))]
 
             const handleFiles = async (files: File[]) => {
               for (const file of files) {
