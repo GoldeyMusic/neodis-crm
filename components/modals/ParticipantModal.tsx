@@ -173,26 +173,41 @@ export default function ParticipantModal({ participant, onClose }: Props) {
               return dp[m][n]
             }
 
-            const matchesName = (filename: string) => {
+            const scoreMatch = (parts: string[], filename: string) => {
               const fnRaw = norm(filename.replace(/\.[^.]+$/, ''))
               const fnFlat = fnRaw.replace(/[_\-.\s]+/g, '')
               const fnSpaced = fnRaw.replace(/[_\-.\s]+/g, ' ')
-              const matched = nameParts.filter(part => {
-                // Exact substring
-                if (fnFlat.includes(part) || fnSpaced.includes(part)) return true
-                // Fuzzy match: tolerate 1 edit for 4-5 char names, 2 for 6+ chars
+              let score = 0
+              for (const part of parts) {
+                if (fnFlat.includes(part) || fnSpaced.includes(part)) { score++; continue }
                 const maxDist = part.length >= 6 ? 2 : part.length >= 4 ? 1 : 0
-                if (maxDist > 0 && fuzzyContains(fnFlat, part, maxDist)) return true
-                return false
-              })
-              return matched.length > 0
+                if (maxDist > 0 && fuzzyContains(fnFlat, part, maxDist)) { score++; continue }
+              }
+              return score
+            }
+
+            // Build name parts for all participants to compare scores
+            const allParticipantParts = participants.map(pp => ({
+              id: pp.id,
+              parts: pp.nom.split(/\s+/).map(w => norm(w)).filter(w => w.length > 2),
+            }))
+
+            const isBestMatch = (filename: string) => {
+              const myScore = scoreMatch(nameParts, filename)
+              if (myScore === 0) return false
+              // Check no other participant has a strictly better score
+              for (const other of allParticipantParts) {
+                if (other.id === p.id) continue
+                if (scoreMatch(other.parts, filename) > myScore) return false
+              }
+              return true
             }
 
             // Direct uploads for this participant
             const directDocs = documents.filter(d => d.participant === p.nom)
-            // Linked from CRM documents by filename match (bilans = 1 per participant)
+            // Linked from CRM documents by filename match — only if best match among all participants
             const linkedDocs = documents.filter(d =>
-              d.participant !== p.nom && matchesName(d.nom)
+              d.participant !== p.nom && isBestMatch(d.nom)
             )
             // Session-level shared docs (presence only — bilans are per-participant)
             const sessionDocs = documents.filter(d =>
