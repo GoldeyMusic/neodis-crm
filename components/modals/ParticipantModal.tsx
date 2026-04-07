@@ -2,6 +2,7 @@
 import { useState } from 'react'
 import { useCRM } from '@/lib/store'
 import { Participant, parcoursSteps } from '@/lib/data'
+import EditParticipantModal from './EditParticipantModal'
 
 interface Props { participant: Participant; onClose: () => void }
 const tabs = ['Profil', 'Parcours pédagogique', 'Checklist admin', 'Documents', 'Notes']
@@ -11,6 +12,7 @@ export default function ParticipantModal({ participant, onClose }: Props) {
   // Read participant live from store so updates are reflected immediately
   const p = participants.find(x => x.id === participant.id) || participant
   const [activeTab, setActiveTab] = useState(0)
+  const [showEdit, setShowEdit] = useState(false)
   // Parcours persisted in participant data
   const parcours: boolean[] = Array.isArray(p.parcours) && p.parcours.length === parcoursSteps.length
     ? p.parcours
@@ -34,7 +36,7 @@ export default function ParticipantModal({ participant, onClose }: Props) {
               <div className="modal-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom}</div>
               <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{p.nomArtiste} · {p.session}</div>
               <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
-                <button className="btn btn-sm" onClick={() => showToast('Modifier — à connecter')}>
+                <button className="btn btn-sm" onClick={() => setShowEdit(true)}>
                   <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
                   Modifier
                 </button>
@@ -166,6 +168,7 @@ export default function ParticipantModal({ participant, onClose }: Props) {
           )}
         </div>
       </div>
+      {showEdit && <EditParticipantModal participant={p} onClose={() => setShowEdit(false)} />}
     </div>
   )
 }
