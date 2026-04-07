@@ -10,6 +10,7 @@ export interface Document {
   cat: string
   session?: string
   formateur?: string
+  participant?: string
   taille: string
   date: string
   data: string      // URL Supabase Storage (anciennement base64)

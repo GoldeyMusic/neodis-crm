@@ -3,12 +3,13 @@ import { useState } from 'react'
 import { useCRM } from '@/lib/store'
 import { Participant, parcoursSteps } from '@/lib/data'
 import EditParticipantModal from './EditParticipantModal'
+import DropZone from '../ui/DropZone'
 
 interface Props { participant: Participant; onClose: () => void }
 const tabs = ['Profil', 'Parcours pédagogique', 'Checklist admin', 'Documents', 'Notes']
 
 export default function ParticipantModal({ participant, onClose }: Props) {
-  const { sessions, participants, deleteParticipant, updateParticipant, showToast } = useCRM()
+  const { sessions, participants, documents, deleteParticipant, updateParticipant, addDocument, deleteDocument, showToast } = useCRM()
   // Read participant live from store so updates are reflected immediately
   const p = participants.find(x => x.id === participant.id) || participant
   const [activeTab, setActiveTab] = useState(0)
@@ -144,17 +145,52 @@ export default function ParticipantModal({ participant, onClose }: Props) {
           )}
 
           {/* DOCUMENTS */}
-          {activeTab === 3 && (
-            <div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-                <div className="section-label" style={{ marginBottom: 0 }}>Documents liés</div>
-                <button className="btn btn-sm" onClick={() => showToast('Upload — à connecter')}>↑ Uploader</button>
+          {activeTab === 3 && (() => {
+            const pDocs = documents.filter(d => d.participant === p.nom)
+            const handleFiles = async (files: File[]) => {
+              for (const file of files) {
+                const taille = file.size < 1024 * 1024
+                  ? `${(file.size / 1024).toFixed(0)} Ko`
+                  : `${(file.size / (1024 * 1024)).toFixed(1)} Mo`
+                await addDocument({
+                  nom: file.name,
+                  cat: 'Participant',
+                  participant: p.nom,
+                  session: p.session,
+                  taille,
+                  date: new Date().toLocaleDateString('fr-FR'),
+                  data: URL.createObjectURL(file),
+                })
+              }
+              showToast(`${files.length} fichier${files.length > 1 ? 's' : ''} importé${files.length > 1 ? 's' : ''}`)
+            }
+            return (
+              <div>
+                <div className="section-label" style={{ marginBottom: 12 }}>Documents liés</div>
+                <DropZone
+                  onFiles={handleFiles}
+                  multiple
+                  label="Glisser-déposer des fichiers ici"
+                  sublabel="PDF, images, documents — max 10 Mo"
+                  accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
+                />
+                {pDocs.length > 0 && (
+                  <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {pDocs.map(doc => (
+                      <div key={doc.id} className="session-item" style={{ cursor: 'default', gap: 10 }}>
+                        <span style={{ fontSize: 16, flexShrink: 0 }}>📄</span>
+                        <div style={{ flex: 1, minWidth: 0 }}>
+                          <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nom}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{doc.taille} · {doc.date}</div>
+                        </div>
+                        <button className="tbl-action" style={{ color: 'var(--red)', flexShrink: 0 }} onClick={() => { if (confirm(`Supprimer ${doc.nom} ?`)) deleteDocument(doc.id) }}>Supprimer</button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="card">
-                <div style={{ padding: '20px', fontSize: 13, color: 'var(--text-tertiary)', textAlign: 'center' }}>Aucun document — uploader via le bouton ci-dessus</div>
-              </div>
-            </div>
-          )}
+            )
+          })()}
 
           {/* NOTES */}
           {activeTab === 4 && (
