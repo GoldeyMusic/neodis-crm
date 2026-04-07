@@ -1,7 +1,7 @@
 'use client'
 import { useState, useMemo } from 'react'
 import { useCRM } from '@/lib/store'
-import { Session } from '@/lib/data'
+import { Session, PlanningEntry } from '@/lib/data'
 import SessionModal from '../modals/SessionModal'
 
 /* ── Helpers dates ── */
@@ -77,6 +77,130 @@ function isInRange(day: Date, start: Date, end: Date) {
   return d >= s && d <= e
 }
 
+/* ── Parser de planning : extrait jour + créneau depuis le texte du module ── */
+type Slot = 'matin' | 'am' | 'journee'
+
+interface DaySlot {
+  day: number           // 1-based day index (J1, J2, ...)
+  slot: Slot            // matin, am (après-midi), journee
+  module: string        // nom du module (sans la parenthèse)
+  formateurId: number
+}
+
+/**
+ * Parse un module comme "MAO (J2 à J5 après-midi)" en slots par jour.
+ * Patterns reconnus :
+ *  - "J1 matin"           → jour 1, matin
+ *  - "J2 + J4 matin"      → jours 2 et 4, matin
+ *  - "J2 à J5 après-midi" → jours 2,3,4,5, après-midi
+ *  - "J1 AM"              → jour 1, après-midi
+ *  - "J1 AM + J2 + J4 matin" → J1 am, J2 journée, J4 matin
+ *  - Pas de parenthèse    → pas de slot (masterclass, etc.)
+ */
+function parseModuleSlots(entry: PlanningEntry): DaySlot[] {
+  const raw = entry.module
+  const moduleName = raw.replace(/\s*\(.*\)\s*$/, '').trim()
+
+  // Extraire le contenu entre parenthèses
+  const parenMatch = raw.match(/\(([^)]+)\)/)
+  if (!parenMatch) return []
+
+  const inside = parenMatch[1].trim()
+  const results: DaySlot[] = []
+
+  // Séparer par "+" pour gérer "J1 AM + J2 + J4 matin"
+  const parts = inside.split(/\s*\+\s*/)
+
+  // Détecter le slot global (le dernier mot de toute l'expression)
+  const globalSlotMatch = inside.match(/(matin|après-midi|après midi|AM)$/i)
+  const globalSlot: Slot | null = globalSlotMatch
+    ? globalSlotMatch[1].toLowerCase() === 'matin' ? 'matin'
+      : 'am'
+    : null
+
+  for (const part of parts) {
+    const p = part.trim()
+
+    // "J2 à J5 ..." → range
+    const rangeMatch = p.match(/J(\d+)\s*(?:à|a|-)\s*J(\d+)/i)
+    if (rangeMatch) {
+      const from = parseInt(rangeMatch[1])
+      const to = parseInt(rangeMatch[2])
+      // Déterminer le slot pour ce range
+      const localSlotMatch = p.match(/(matin|après-midi|après midi|AM)/i)
+      const slot: Slot = localSlotMatch
+        ? localSlotMatch[1].toLowerCase() === 'matin' ? 'matin' : 'am'
+        : globalSlot ?? 'journee'
+      for (let d = from; d <= to; d++) {
+        results.push({ day: d, slot, module: moduleName, formateurId: entry.formateurId })
+      }
+      continue
+    }
+
+    // "J3 matin" ou "J1 AM" ou juste "J2"
+    const singleMatch = p.match(/J(\d+)(?:\s+(matin|après-midi|après midi|AM))?/i)
+    if (singleMatch) {
+      const dayNum = parseInt(singleMatch[1])
+      let slot: Slot
+      if (singleMatch[2]) {
+        slot = singleMatch[2].toLowerCase() === 'matin' ? 'matin' : 'am'
+      } else {
+        slot = globalSlot ?? 'journee'
+      }
+      results.push({ day: dayNum, slot, module: moduleName, formateurId: entry.formateurId })
+    }
+  }
+
+  return results
+}
+
+/**
+ * Pour une session donnée, génère la map date → slots de la journée
+ */
+function buildSessionDayMap(session: Session, range: [Date, Date], formateurs: { id: number; nom: string }[]): Map<string, { matin: DaySlot[]; am: DaySlot[] }> {
+  const map = new Map<string, { matin: DaySlot[]; am: DaySlot[] }>()
+
+  if (!session.planning) return map
+
+  // Lister les jours ouvrés de la session (lun-ven)
+  const workDays: Date[] = []
+  const cur = new Date(range[0])
+  while (cur <= range[1]) {
+    const dow = cur.getDay()
+    if (dow >= 1 && dow <= 5) {
+      workDays.push(new Date(cur))
+    }
+    cur.setDate(cur.getDate() + 1)
+  }
+
+  // Parser chaque entrée de planning
+  const allSlots: DaySlot[] = []
+  for (const entry of session.planning) {
+    const slots = parseModuleSlots(entry)
+    allSlots.push(...slots)
+  }
+
+  // Mapper les slots sur les dates
+  for (const slot of allSlots) {
+    const dayIdx = slot.day - 1 // J1 → index 0
+    if (dayIdx < 0 || dayIdx >= workDays.length) continue
+    const dateKey = workDays[dayIdx].toISOString().slice(0, 10)
+    if (!map.has(dateKey)) map.set(dateKey, { matin: [], am: [] })
+    const dayData = map.get(dateKey)!
+    if (slot.slot === 'matin') {
+      dayData.matin.push(slot)
+    } else if (slot.slot === 'am') {
+      dayData.am.push(slot)
+    } else {
+      // journée entière → matin + am
+      dayData.matin.push(slot)
+      dayData.am.push(slot)
+    }
+  }
+
+  return map
+}
+
 /* ── Couleurs par session (rotation) ── */
 const SESSION_COLORS = [
   { bg: '#EFF6FF', border: '#BFDBFE', text: '#2563EB' },  // bleu
@@ -134,6 +258,26 @@ export default function Calendrier() {
       return f ? f.nom : ''
     }).filter(Boolean)
   }
+
+  // Day maps : pour chaque session, map date → slots matin/am
+  const dayMaps = useMemo(() => {
+    const maps = new Map<number, Map<string, { matin: DaySlot[]; am: DaySlot[] }>>()
+    for (const { session, range } of sessionRanges) {
+      maps.set(session.id, buildSessionDayMap(session, range, formateurs))
+    }
+    return maps
+  }, [sessionRanges, formateurs])
+
+  // Helper : formateur nom court (prénom ou premier mot)
+  const fmtShort = (formateurId: number) => {
+    const f = formateurs.find(f => f.id === formateurId)
+    if (!f) return ''
+    const parts = f.nom.split(' ')
+    return parts.length > 1 ? parts[0] : f.nom
+  }
+
+  // State pour jour sélectionné (affiche le détail)
+  const [selectedDay, setSelectedDay] = useState<Date | null>(null)
 
   return (
     <>
@@ -199,34 +343,54 @@ export default function Calendrier() {
                     !inMonth && 'cal-cell-outside',
                     isToday && 'cal-cell-today',
                     isWeekend && 'cal-cell-weekend',
+                    selectedDay && isSameDay(date, selectedDay) && 'cal-cell-selected',
                   ].filter(Boolean).join(' ')}
+                  onClick={() => daySessions.length > 0 && setSelectedDay(date)}
+                  style={daySessions.length > 0 ? { cursor: 'pointer' } : undefined}
                 >
                   <div className={`cal-day-num${isToday ? ' cal-today-badge' : ''}`}>
                     {date.getDate()}
                   </div>
                   <div className="cal-events">
                     {daySessions.map(({ session, range, color }) => {
-                      const isStart = isSameDay(date, range[0])
-                      const isEnd = isSameDay(date, range[1])
-                      const fmtrs = getFormateurs(session)
+                      const dateKey = date.toISOString().slice(0, 10)
+                      const dayData = dayMaps.get(session.id)?.get(dateKey)
+                      const hasPlanningDetail = dayData && (dayData.matin.length > 0 || dayData.am.length > 0)
+
                       return (
                         <div
                           key={session.id}
-                          className={[
-                            'cal-event',
-                            isStart && 'cal-event-start',
-                            isEnd && 'cal-event-end',
-                          ].filter(Boolean).join(' ')}
-                          style={{
-                            background: color.bg,
-                            borderColor: color.border,
-                            color: color.text,
-                          }}
-                          title={`${session.name}\n${session.dates}\n${fmtrs.length > 0 ? 'Formateurs : ' + fmtrs.join(', ') : ''}`}
-                          onClick={() => setSelectedSession(session)}
+                          className="cal-event-detail"
+                          style={{ borderLeftColor: color.text, background: color.bg }}
+                          onClick={(e) => { e.stopPropagation(); setSelectedDay(date); setSelectedSession(null) }}
                         >
-                          {isStart && (
-                            <span className="cal-event-label">{session.name.length > 18 ? session.name.slice(0, 16) + '…' : session.name}</span>
+                          {hasPlanningDetail ? (
+                            <>
+                              {dayData.matin.length > 0 && (
+                                <div className="cal-slot">
+                                  <span className="cal-slot-period">AM</span>
+                                  {dayData.matin.map((s, i) => (
+                                    <span key={i} className="cal-slot-entry" style={{ color: color.text }}>
+                                      {s.module} <span className="cal-slot-fmtr">{fmtShort(s.formateurId)}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                              {dayData.am.length > 0 && (
+                                <div className="cal-slot">
+                                  <span className="cal-slot-period">PM</span>
+                                  {dayData.am.map((s, i) => (
+                                    <span key={i} className="cal-slot-entry" style={{ color: color.text }}>
+                                      {s.module} <span className="cal-slot-fmtr">{fmtShort(s.formateurId)}</span>
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+                            </>
+                          ) : (
+                            <span className="cal-event-label" style={{ color: color.text }}>
+                              {session.name.length > 16 ? session.name.slice(0, 14) + '…' : session.name}
+                            </span>
                           )}
                         </div>
                       )
@@ -238,8 +402,87 @@ export default function Calendrier() {
           </div>
         </div>
 
-        {/* Détail des sessions du mois */}
-        {visibleSessions.length > 0 && (
+        {/* Détail jour sélectionné */}
+        {selectedDay && (() => {
+          const dayKey = selectedDay.toISOString().slice(0, 10)
+          const daySes = visibleSessions.filter(({ range }) => isInRange(selectedDay, range[0], range[1]))
+          const dayLabel = selectedDay.toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })
+          if (daySes.length === 0) return null
+          return (
+            <div className="cal-details animate-in">
+              <div className="card">
+                <div className="card-header">
+                  <div className="card-title" style={{ textTransform: 'capitalize' }}>{dayLabel}</div>
+                  <button className="card-action" onClick={() => setSelectedDay(null)}>Fermer</button>
+                </div>
+                {daySes.map(({ session, color }) => {
+                  const dayData = dayMaps.get(session.id)?.get(dayKey)
+                  const hasDetail = dayData && (dayData.matin.length > 0 || dayData.am.length > 0)
+                  return (
+                    <div key={session.id} style={{ padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: hasDetail ? 10 : 0 }}>
+                        <div style={{ width: 4, height: 28, borderRadius: 2, background: color.text, flexShrink: 0 }} />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 500, fontSize: 13, cursor: 'pointer' }} onClick={() => setSelectedSession(session)}>{session.name}</div>
+                          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{session.dates}</div>
+                        </div>
+                      </div>
+                      {hasDetail && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: 6, marginLeft: 14 }}>
+                          {dayData.matin.length > 0 && (
+                            <div className="cal-day-slot-row">
+                              <span className="cal-day-slot-badge" style={{ background: '#FFFBEB', color: '#D97706', border: '1px solid #FDE68A' }}>Matin</span>
+                              <div className="cal-day-slot-entries">
+                                {dayData.matin.map((s, i) => {
+                                  const f = formateurs.find(f => f.id === s.formateurId)
+                                  return (
+                                    <div key={i} className="cal-day-slot-entry">
+                                      <span style={{ fontWeight: 500, fontSize: 13 }}>{s.module}</span>
+                                      {f && (
+                                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="4" r="3"/><path d="M2 14s0-4 6-4 6 4 6 4"/></svg>
+                                          {f.nom}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                          {dayData.am.length > 0 && (
+                            <div className="cal-day-slot-row">
+                              <span className="cal-day-slot-badge" style={{ background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE' }}>Après-midi</span>
+                              <div className="cal-day-slot-entries">
+                                {dayData.am.map((s, i) => {
+                                  const f = formateurs.find(f => f.id === s.formateurId)
+                                  return (
+                                    <div key={i} className="cal-day-slot-entry">
+                                      <span style={{ fontWeight: 500, fontSize: 13 }}>{s.module}</span>
+                                      {f && (
+                                        <span style={{ fontSize: 12, color: 'var(--text-tertiary)', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="8" cy="4" r="3"/><path d="M2 14s0-4 6-4 6 4 6 4"/></svg>
+                                          {f.nom}
+                                        </span>
+                                      )}
+                                    </div>
+                                  )
+                                })}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })()}
+
+        {/* Sessions du mois (quand aucun jour sélectionné) */}
+        {!selectedDay && visibleSessions.length > 0 && (
           <div className="cal-details animate-in">
             <div className="card">
               <div className="card-header">
