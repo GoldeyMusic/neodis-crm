@@ -4,7 +4,7 @@ import { useCRM } from '@/lib/store'
 import { Participant } from '@/lib/data'
 import ParticipantModal from '../modals/ParticipantModal'
 
-type SortKey = 'nom' | 'nomArtiste' | 'session' | 'tel' | 'titreSingle'
+type SortKey = 'nom' | 'nomArtiste' | 'session' | 'tel'
 type SortDir = 'asc' | 'desc'
 
 export default function Participants() {
@@ -105,9 +105,7 @@ export default function Participants() {
               <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('tel')}>
                 <span style={{ display: 'inline-flex', alignItems: 'center' }}>Téléphone{sortIcon('tel')}</span>
               </th>
-              <th style={{ cursor: 'pointer', userSelect: 'none' }} onClick={() => toggleSort('titreSingle')}>
-                <span style={{ display: 'inline-flex', alignItems: 'center' }}>Single{sortIcon('titreSingle')}</span>
-              </th>
+              <th>Statut</th>
               <th></th>
             </tr>
           </thead>
@@ -131,7 +129,17 @@ export default function Participants() {
                   <span className="tag tag-ft" style={{ fontSize: 11 }}>{p.session.replace('Promo UMANI ', '')}</span>
                 </td>
                 <td style={{ color: 'var(--text-tertiary)', fontFamily: 'DM Mono', fontSize: 12 }}>{p.tel}</td>
-                <td style={{ color: 'var(--text-tertiary)', fontSize: 12 }}>{p.titreSingle || '—'}</td>
+                <td>
+                  <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
+                    {p.opcoStatus === 'valide' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#F0FFF4', color: '#16A34A', border: '1px solid #BBF7D0', fontWeight: 500 }}>OPCO validé</span>}
+                    {p.opcoStatus === 'refuse' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF1F2', color: '#BE123C', border: '1px solid #FECDD3', fontWeight: 500 }}>OPCO refusé</span>}
+                    {p.opcoStatus === 'en_attente' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FED7AA', fontWeight: 500 }}>OPCO attente</span>}
+                    {p.assiduite === 'suivi_complet' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#F0FFF4', color: '#16A34A', border: '1px solid #BBF7D0', fontWeight: 500 }}>Complet</span>}
+                    {p.assiduite === 'abandonne' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FED7AA', fontWeight: 500 }}>Abandon</span>}
+                    {p.assiduite === 'jamais_presente' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF1F2', color: '#BE123C', border: '1px solid #FECDD3', fontWeight: 500 }}>Absent</span>}
+                    {(p.tags || []).map(tag => <span key={tag} style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: 'var(--surface-2)', color: 'var(--text-tertiary)', border: '1px solid var(--border)' }}>{tag}</span>)}
+                  </div>
+                </td>
                 <td onClick={e => e.stopPropagation()}>
                   <button className="tbl-action" onClick={() => setSelected(p)}>Voir</button>
                 </td>

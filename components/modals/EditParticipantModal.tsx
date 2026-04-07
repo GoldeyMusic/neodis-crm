@@ -1,7 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { useCRM } from '@/lib/store'
-import { Participant } from '@/lib/data'
+import { Participant, OPCOStatus, AssiduiteStatus } from '@/lib/data'
 
 interface Props { participant: Participant; onClose: () => void }
 
@@ -26,6 +26,8 @@ export default function EditParticipantModal({ participant, onClose }: Props) {
   const [spotifyTitre, setSpotifyTitre] = useState(p.spotifyTitre)
   const [titreSingle, setTitreSingle] = useState(p.titreSingle)
   const [lienUMANI, setLienUMANI] = useState(p.lienUMANI)
+  const [opcoStatus, setOpcoStatus] = useState<OPCOStatus>(p.opcoStatus || '')
+  const [assiduite, setAssiduite] = useState<AssiduiteStatus>(p.assiduite || '')
 
   const handleSubmit = () => {
     if (!nom.trim()) { showToast('Nom requis'); return }
@@ -33,6 +35,7 @@ export default function EditParticipantModal({ participant, onClose }: Props) {
     updateParticipant(p.id, {
       nom, nomArtiste, email, tel, region, adresse, session, financeur, factures,
       idFT, numConvention, insta, youtube, streaming, spotifyTitre, titreSingle, lienUMANI, initials,
+      opcoStatus, assiduite,
     })
     showToast('Participant mis à jour')
     onClose()
@@ -108,6 +111,27 @@ export default function EditParticipantModal({ participant, onClose }: Props) {
             <div className="form-group">
               <label className="form-label">Factures</label>
               <input className="form-input" value={factures} onChange={e => setFactures(e.target.value)} />
+            </div>
+          </div>
+
+          <div className="form-row two">
+            <div className="form-group">
+              <label className="form-label">Statut OPCO</label>
+              <select className="form-input" value={opcoStatus} onChange={e => setOpcoStatus(e.target.value as OPCOStatus)}>
+                <option value="">— Non renseigné</option>
+                <option value="en_attente">En attente</option>
+                <option value="valide">Validé</option>
+                <option value="refuse">Refusé</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label className="form-label">Assiduité</label>
+              <select className="form-input" value={assiduite} onChange={e => setAssiduite(e.target.value as AssiduiteStatus)}>
+                <option value="">— Non renseigné</option>
+                <option value="suivi_complet">Suivi complet</option>
+                <option value="abandonne">Abandon</option>
+                <option value="jamais_presente">Jamais présenté</option>
+              </select>
             </div>
           </div>
 

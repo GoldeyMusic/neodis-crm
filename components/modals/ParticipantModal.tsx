@@ -14,6 +14,20 @@ export default function ParticipantModal({ participant, onClose }: Props) {
   const p = participants.find(x => x.id === participant.id) || participant
   const [activeTab, setActiveTab] = useState(0)
   const [showEdit, setShowEdit] = useState(false)
+  const [newTag, setNewTag] = useState('')
+
+  const opcoLabel: Record<string, string> = { en_attente: 'OPCO en attente', valide: 'OPCO validé', refuse: 'OPCO refusé' }
+  const opcoColor: Record<string, { bg: string; color: string; border: string }> = {
+    en_attente: { bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
+    valide: { bg: '#F0FFF4', color: '#16A34A', border: '#BBF7D0' },
+    refuse: { bg: '#FFF1F2', color: '#BE123C', border: '#FECDD3' },
+  }
+  const assiduiteLabel: Record<string, string> = { suivi_complet: 'Suivi complet', abandonne: 'Abandon', jamais_presente: 'Jamais présenté' }
+  const assiduiteColor: Record<string, { bg: string; color: string; border: string }> = {
+    suivi_complet: { bg: '#F0FFF4', color: '#16A34A', border: '#BBF7D0' },
+    abandonne: { bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
+    jamais_presente: { bg: '#FFF1F2', color: '#BE123C', border: '#FECDD3' },
+  }
   // Parcours persisted in participant data
   const parcours: boolean[] = Array.isArray(p.parcours) && p.parcours.length === parcoursSteps.length
     ? p.parcours
@@ -36,7 +50,19 @@ export default function ParticipantModal({ participant, onClose }: Props) {
             <div style={{ flex: 1, minWidth: 0 }}>
               <div className="modal-title" style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{p.nom}</div>
               <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 2 }}>{p.nomArtiste} · {p.session}</div>
-              <div style={{ display: 'flex', gap: 6, marginTop: 10 }}>
+              {/* Status pills + tags */}
+              <div style={{ display: 'flex', gap: 5, marginTop: 8, flexWrap: 'wrap' }}>
+                {p.opcoStatus && opcoColor[p.opcoStatus] && (() => { const c = opcoColor[p.opcoStatus]; return (
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: c.bg, color: c.color, border: `1px solid ${c.border}`, fontWeight: 500 }}>{opcoLabel[p.opcoStatus]}</span>
+                ) })()}
+                {p.assiduite && assiduiteColor[p.assiduite] && (() => { const c = assiduiteColor[p.assiduite]; return (
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: c.bg, color: c.color, border: `1px solid ${c.border}`, fontWeight: 500 }}>{assiduiteLabel[p.assiduite]}</span>
+                ) })()}
+                {(p.tags || []).map(tag => (
+                  <span key={tag} style={{ fontSize: 10, padding: '2px 8px', borderRadius: 10, background: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)', fontWeight: 500 }}>{tag}</span>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: 6, marginTop: 8 }}>
                 <button className="btn btn-sm" onClick={() => setShowEdit(true)}>
                   <svg width="11" height="11" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 2l3 3-9 9H2v-3L11 2z"/></svg>
                   Modifier
@@ -65,6 +91,52 @@ export default function ParticipantModal({ participant, onClose }: Props) {
                 <div className="info-block"><div className="info-label">Session</div><div className="info-value" style={{ fontSize: 13 }}>{p.session}</div></div>
                 <div className="info-block"><div className="info-label">Financeur</div><div className="info-value">{p.financeur}</div></div>
                 <div className="info-block"><div className="info-label">Factures</div><div className="info-value" style={{ fontSize: 12 }}>{p.factures}</div></div>
+              </div>
+
+              {/* Statuts & Tags */}
+              <div className="section-label">Suivi & Tags</div>
+              <div className="card" style={{ marginBottom: 20, padding: '14px 16px' }}>
+                <div style={{ display: 'flex', gap: 12, marginBottom: 14, flexWrap: 'wrap' }}>
+                  <div style={{ flex: 1, minWidth: 140 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono', textTransform: 'uppercase', marginBottom: 6 }}>OPCO</div>
+                    <select className="form-input" style={{ fontSize: 12, padding: '4px 8px' }} value={p.opcoStatus || ''} onChange={e => updateParticipant(p.id, { opcoStatus: e.target.value as any })}>
+                      <option value="">— Non renseigné</option>
+                      <option value="en_attente">En attente</option>
+                      <option value="valide">Validé</option>
+                      <option value="refuse">Refusé</option>
+                    </select>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 140 }}>
+                    <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono', textTransform: 'uppercase', marginBottom: 6 }}>Assiduité</div>
+                    <select className="form-input" style={{ fontSize: 12, padding: '4px 8px' }} value={p.assiduite || ''} onChange={e => updateParticipant(p.id, { assiduite: e.target.value as any })}>
+                      <option value="">— Non renseigné</option>
+                      <option value="suivi_complet">Suivi complet</option>
+                      <option value="abandonne">Abandon</option>
+                      <option value="jamais_presente">Jamais présenté</option>
+                    </select>
+                  </div>
+                </div>
+                <div>
+                  <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono', textTransform: 'uppercase', marginBottom: 6 }}>Tags</div>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', alignItems: 'center' }}>
+                    {(p.tags || []).map(tag => (
+                      <span key={tag} style={{ display: 'inline-flex', alignItems: 'center', gap: 4, fontSize: 11, padding: '3px 8px', borderRadius: 10, background: 'var(--surface-2)', color: 'var(--text-secondary)', border: '1px solid var(--border)' }}>
+                        {tag}
+                        <span style={{ cursor: 'pointer', opacity: 0.5, fontSize: 13, lineHeight: 1 }} onClick={() => updateParticipant(p.id, { tags: (p.tags || []).filter(t => t !== tag) })}>×</span>
+                      </span>
+                    ))}
+                    <form style={{ display: 'inline-flex' }} onSubmit={e => {
+                      e.preventDefault()
+                      const t = newTag.trim()
+                      if (t && !(p.tags || []).includes(t)) {
+                        updateParticipant(p.id, { tags: [...(p.tags || []), t] })
+                        setNewTag('')
+                      }
+                    }}>
+                      <input className="form-input" style={{ fontSize: 11, padding: '3px 8px', width: 100 }} placeholder="+ Ajouter…" value={newTag} onChange={e => setNewTag(e.target.value)} />
+                    </form>
+                  </div>
+                </div>
               </div>
 
               <div className="section-label">Présence en ligne</div>

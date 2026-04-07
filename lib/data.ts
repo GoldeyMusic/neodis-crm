@@ -40,6 +40,9 @@ export interface Session {
   montantCA?: number   // forfait global (ex. Prest@ppli) — si absent, calcul par participant × tarif AIF
 }
 
+export type OPCOStatus = 'en_attente' | 'valide' | 'refuse' | ''
+export type AssiduiteStatus = 'suivi_complet' | 'abandonne' | 'jamais_presente' | ''
+
 export interface Participant {
   id: number
   nom: string
@@ -61,6 +64,9 @@ export interface Participant {
   numConvention: string
   factures: string
   initials: string
+  tags?: string[]
+  opcoStatus?: OPCOStatus
+  assiduite?: AssiduiteStatus
 }
 
 export interface FormateurLien {
