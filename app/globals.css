@@ -529,11 +529,18 @@ html, body { height: 100%; font-family: 'Inter', sans-serif; background: var(--b
   .portal-card .status-pill { font-size: 10px; padding: 2px 8px; }
 
   /* Calendrier mobile */
-  .cal-grid { font-size: 11px; }
-  .cal-header-cell { padding: 6px 2px; font-size: 10px; }
-  .cal-cell { min-height: 36px; padding: 2px; }
-  .cal-day-num { font-size: 10px; }
-  .cal-event-label { font-size: 8px; }
+  .cal-grid { font-size: 11px; overflow-x: hidden; }
+  .cal-header { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .cal-header-cell { padding: 6px 1px; font-size: 9px; letter-spacing: 0; }
+  .cal-body { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+  .cal-cell { min-height: 36px; padding: 2px; min-width: 0; overflow: hidden; }
+  .cal-day-num { font-size: 10px; width: 18px; height: 18px; }
+  .cal-event-detail { padding: 1px 2px; font-size: 8px; border-left-width: 2px; }
+  .cal-event-label { font-size: 7px; }
+  .cal-slot { gap: 1px; }
+  .cal-slot-period { font-size: 7px; width: 12px; }
+  .cal-slot-entry { font-size: 8px; }
+  .cal-slot-fmtr { font-size: 6px; }
   .cal-nav { gap: 6px; }
   .cal-month-label { font-size: 13px; }
 
