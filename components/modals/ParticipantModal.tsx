@@ -146,7 +146,29 @@ export default function ParticipantModal({ participant, onClose }: Props) {
 
           {/* DOCUMENTS */}
           {activeTab === 3 && (() => {
-            const pDocs = documents.filter(d => d.participant === p.nom)
+            // Normalize for fuzzy match: "Ayanah Mouflet" → ["ayanah", "mouflet"]
+            const nameParts = p.nom.toLowerCase().split(/\s+/).filter(w => w.length > 2)
+            const nameNorm = p.nom.toLowerCase().replace(/\s+/g, '').replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u').replace(/[îï]/g, 'i').replace(/[ôö]/g, 'o').replace(/[ç]/g, 'c')
+
+            const matchesName = (filename: string) => {
+              const fn = filename.toLowerCase().replace(/[_\-.\s]+/g, '').replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u').replace(/[îï]/g, 'i').replace(/[ôö]/g, 'o').replace(/[ç]/g, 'c')
+              // Full name match (without spaces/separators)
+              if (fn.includes(nameNorm)) return true
+              // All name parts present in filename
+              const fnSpaced = filename.toLowerCase().replace(/[_\-.]+/g, ' ')
+              return nameParts.length >= 2 && nameParts.every(part => fnSpaced.includes(part))
+            }
+
+            // Direct uploads for this participant
+            const directDocs = documents.filter(d => d.participant === p.nom)
+            // Linked from CRM documents (bilans, presence, etc.) by filename match
+            const linkedDocs = documents.filter(d =>
+              d.participant !== p.nom && matchesName(d.nom)
+            )
+            // Deduplicate
+            const seenIds = new Set(directDocs.map(d => d.id))
+            const allDocs = [...directDocs, ...linkedDocs.filter(d => !seenIds.has(d.id))]
+
             const handleFiles = async (files: File[]) => {
               for (const file of files) {
                 const taille = file.size < 1024 * 1024
@@ -174,18 +196,32 @@ export default function ParticipantModal({ participant, onClose }: Props) {
                   sublabel="PDF, images, documents — max 10 Mo"
                   accept=".pdf,.jpg,.jpeg,.png,.doc,.docx,.xls,.xlsx"
                 />
-                {pDocs.length > 0 && (
+                {allDocs.length > 0 && (
                   <div style={{ marginTop: 16, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    {pDocs.map(doc => (
-                      <div key={doc.id} className="session-item" style={{ cursor: 'default', gap: 10 }}>
-                        <span style={{ fontSize: 16, flexShrink: 0 }}>📄</span>
-                        <div style={{ flex: 1, minWidth: 0 }}>
-                          <div style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nom}</div>
-                          <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{doc.taille} · {doc.date}</div>
+                    {allDocs.map(doc => {
+                      const isLinked = !directDocs.find(d => d.id === doc.id)
+                      const catLabel: Record<string, string> = { bilans: 'Bilan', presence: 'Présence', pedago: 'Pédago', factures_financeurs: 'Facture', Participant: 'Upload' }
+                      const catColor: Record<string, { bg: string; color: string; border: string }> = {
+                        bilans: { bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
+                        presence: { bg: '#F0FFF4', color: '#16A34A', border: '#BBF7D0' },
+                        Participant: { bg: 'var(--surface-2)', color: 'var(--text-secondary)', border: 'var(--border)' },
+                      }
+                      const colors = catColor[doc.cat] || { bg: 'var(--surface-2)', color: 'var(--text-tertiary)', border: 'var(--border)' }
+                      return (
+                        <div key={doc.id} className="session-item" style={{ cursor: doc.data ? 'pointer' : 'default', gap: 10 }} onClick={() => doc.data && window.open(doc.data, '_blank')}>
+                          <span style={{ fontSize: 16, flexShrink: 0 }}>{doc.cat === 'bilans' ? '📊' : doc.cat === 'presence' ? '📋' : '📄'}</span>
+                          <div style={{ flex: 1, minWidth: 0 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                              <span style={{ fontSize: 13, fontWeight: 500, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{doc.nom}</span>
+                              <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: colors.bg, color: colors.color, border: `1px solid ${colors.border}`, flexShrink: 0 }}>{catLabel[doc.cat] || doc.cat}</span>
+                              {isLinked && <span style={{ fontSize: 9, padding: '1px 5px', borderRadius: 4, background: '#EFF6FF', color: '#2563EB', border: '1px solid #BFDBFE', flexShrink: 0 }}>Lié</span>}
+                            </div>
+                            <div style={{ fontSize: 11, color: 'var(--text-tertiary)' }}>{doc.taille} · {doc.date}</div>
+                          </div>
+                          {!isLinked && <button className="tbl-action" style={{ color: 'var(--red)', flexShrink: 0 }} onClick={e => { e.stopPropagation(); if (confirm(`Supprimer ${doc.nom} ?`)) deleteDocument(doc.id) }}>Supprimer</button>}
                         </div>
-                        <button className="tbl-action" style={{ color: 'var(--red)', flexShrink: 0 }} onClick={() => { if (confirm(`Supprimer ${doc.nom} ?`)) deleteDocument(doc.id) }}>Supprimer</button>
-                      </div>
-                    ))}
+                      )
+                    })}
                   </div>
                 )}
               </div>
