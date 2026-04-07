@@ -119,29 +119,7 @@ export function CRMProvider({ children }: { children: ReactNode }) {
 
         // Remplacer le seed par les données Supabase si elles existent
         if (dbSessions.length > 0) {
-          // Migration : s'assurer que les modules planning contiennent les infos calendrier
-          let sessionsMigrated = false
-          const migratedSessions = dbSessions.map(s => {
-            if (s.planning) {
-              let planning = [...s.planning]
-              let changed = false
-              // Fixer le module de Junior Makasi sur session oct si pas de parenthèse
-              planning = planning.map(p => {
-                if (p.formateurId === 8 && !p.module.includes('(')) {
-                  changed = true
-                  return { ...p, module: 'Branding (J1 après-midi)' }
-                }
-                return p
-              })
-              if (changed) { sessionsMigrated = true; return { ...s, planning } }
-            }
-            return s
-          })
-          setSessions(migratedSessions)
-          if (sessionsMigrated) {
-            console.log('[store] Migration: fixed module labels for calendar')
-            upsertAll('sessions', migratedSessions)
-          }
+          setSessions(dbSessions)
         }
         if (dbParticipants.length > 0) {
           const filtered = dbParticipants.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id))
