@@ -150,16 +150,41 @@ export default function ParticipantModal({ participant, onClose }: Props) {
             // "Ayanah Mouflet" → ["ayanah", "mouflet"]
             const nameParts = p.nom.split(/\s+/).map(w => norm(w)).filter(w => w.length > 2)
 
+            // Fuzzy substring: check if any window of length n in haystack is ≤ maxDist edits from needle
+            const fuzzyContains = (haystack: string, needle: string, maxDist: number) => {
+              const n = needle.length
+              if (n === 0) return false
+              for (let start = 0; start <= haystack.length - n + maxDist && start <= haystack.length - 1; start++) {
+                const end = Math.min(start + n + maxDist, haystack.length)
+                const window = haystack.slice(start, end)
+                if (levenshtein(window, needle) <= maxDist) return true
+              }
+              return false
+            }
+            const levenshtein = (a: string, b: string): number => {
+              const m = a.length, n = b.length
+              const dp: number[][] = Array.from({ length: m + 1 }, (_, i) => {
+                const row = new Array(n + 1).fill(0); row[0] = i; return row
+              })
+              for (let j = 0; j <= n; j++) dp[0][j] = j
+              for (let i = 1; i <= m; i++)
+                for (let j = 1; j <= n; j++)
+                  dp[i][j] = Math.min(dp[i-1][j] + 1, dp[i][j-1] + 1, dp[i-1][j-1] + (a[i-1] !== b[j-1] ? 1 : 0))
+              return dp[m][n]
+            }
+
             const matchesName = (filename: string) => {
-              // Normalize filename: remove extension, replace separators with nothing for substring search
-              const fnRaw = norm(filename.replace(/\.[^.]+$/, ''))          // sans extension
-              const fnFlat = fnRaw.replace(/[_\-.\s]+/g, '')                // tout collé
-              const fnSpaced = fnRaw.replace(/[_\-.\s]+/g, ' ')            // séparé par espaces
-              // At least one name part (3+ chars) found as substring in the flat filename
-              // e.g. "bilan_formationayahana.pdf" → fnFlat = "bilanformationayahana" contains "ayanah"? No but "ayahana" close...
-              // Use each part as substring in the raw normalized filename
-              const matched = nameParts.filter(part => fnFlat.includes(part) || fnSpaced.includes(part))
-              // Require at least one significant match (family name OR first name)
+              const fnRaw = norm(filename.replace(/\.[^.]+$/, ''))
+              const fnFlat = fnRaw.replace(/[_\-.\s]+/g, '')
+              const fnSpaced = fnRaw.replace(/[_\-.\s]+/g, ' ')
+              const matched = nameParts.filter(part => {
+                // Exact substring
+                if (fnFlat.includes(part) || fnSpaced.includes(part)) return true
+                // Fuzzy match: tolerate 1 edit for 4-5 char names, 2 for 6+ chars
+                const maxDist = part.length >= 6 ? 2 : part.length >= 4 ? 1 : 0
+                if (maxDist > 0 && fuzzyContains(fnFlat, part, maxDist)) return true
+                return false
+              })
               return matched.length > 0
             }
 
