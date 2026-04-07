@@ -131,9 +131,8 @@ export default function Participants() {
                 <td style={{ color: 'var(--text-tertiary)', fontFamily: 'DM Mono', fontSize: 12 }}>{p.tel}</td>
                 <td>
                   <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap' }}>
-                    {p.opcoStatus === 'valide' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#F0FFF4', color: '#16A34A', border: '1px solid #BBF7D0', fontWeight: 500 }}>OPCO validé</span>}
+                    {p.opcoStatus === 'valide' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#F0FFF4', color: '#16A34A', border: '1px solid #BBF7D0', fontWeight: 500 }}>OPCO accepté</span>}
                     {p.opcoStatus === 'refuse' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF1F2', color: '#BE123C', border: '1px solid #FECDD3', fontWeight: 500 }}>OPCO refusé</span>}
-                    {p.opcoStatus === 'en_attente' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FED7AA', fontWeight: 500 }}>OPCO attente</span>}
                     {p.assiduite === 'suivi_complet' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#F0FFF4', color: '#16A34A', border: '1px solid #BBF7D0', fontWeight: 500 }}>Complet</span>}
                     {p.assiduite === 'abandonne' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF7ED', color: '#C2410C', border: '1px solid #FED7AA', fontWeight: 500 }}>Abandon</span>}
                     {p.assiduite === 'jamais_presente' && <span style={{ fontSize: 9, padding: '1px 6px', borderRadius: 8, background: '#FFF1F2', color: '#BE123C', border: '1px solid #FECDD3', fontWeight: 500 }}>Absent</span>}

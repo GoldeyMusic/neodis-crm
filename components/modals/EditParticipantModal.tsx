@@ -119,8 +119,7 @@ export default function EditParticipantModal({ participant, onClose }: Props) {
               <label className="form-label">Statut OPCO</label>
               <select className="form-input" value={opcoStatus} onChange={e => setOpcoStatus(e.target.value as OPCOStatus)}>
                 <option value="">— Non renseigné</option>
-                <option value="en_attente">En attente</option>
-                <option value="valide">Validé</option>
+                <option value="valide">Accepté</option>
                 <option value="refuse">Refusé</option>
               </select>
             </div>

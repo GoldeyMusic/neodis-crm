@@ -67,7 +67,7 @@ import { authUsers } from './data'
 // IDs de participants définitivement supprimés
 const DELETED_PARTICIPANT_IDS = new Set([309])
 
-const SEED_PARTICIPANTS = participantsData.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id)).map(p => ({ ...p, opcoStatus: p.opcoStatus || 'valide' as const, assiduite: p.assiduite || 'suivi_complet' as const }))
+const SEED_PARTICIPANTS = participantsData.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id)).map(p => ({ ...p, opcoStatus: p.opcoStatus || ('' as const), assiduite: p.assiduite || ('' as const) }))
 
 // Détecte si une string est un base64 (pas une URL)
 function isBase64(s: string | undefined): boolean {

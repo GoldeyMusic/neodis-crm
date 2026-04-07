@@ -6,7 +6,7 @@ import EditParticipantModal from './EditParticipantModal'
 import DropZone from '../ui/DropZone'
 
 interface Props { participant: Participant; onClose: () => void }
-const tabs = ['Profil', 'Parcours pédagogique', 'Checklist admin', 'Documents', 'Notes']
+const tabs = ['Profil', 'Parcours pédagogique', 'Documents', 'Notes']
 
 export default function ParticipantModal({ participant, onClose }: Props) {
   const { sessions, participants, documents, deleteParticipant, updateParticipant, addDocument, deleteDocument, showToast } = useCRM()
@@ -16,9 +16,8 @@ export default function ParticipantModal({ participant, onClose }: Props) {
   const [showEdit, setShowEdit] = useState(false)
   const [newTag, setNewTag] = useState('')
 
-  const opcoLabel: Record<string, string> = { en_attente: 'OPCO en attente', valide: 'OPCO validé', refuse: 'OPCO refusé' }
+  const opcoLabel: Record<string, string> = { valide: 'OPCO accepté', refuse: 'OPCO refusé' }
   const opcoColor: Record<string, { bg: string; color: string; border: string }> = {
-    en_attente: { bg: '#FFF7ED', color: '#C2410C', border: '#FED7AA' },
     valide: { bg: '#F0FFF4', color: '#16A34A', border: '#BBF7D0' },
     refuse: { bg: '#FFF1F2', color: '#BE123C', border: '#FECDD3' },
   }
@@ -101,8 +100,7 @@ export default function ParticipantModal({ participant, onClose }: Props) {
                     <div style={{ fontSize: 11, color: 'var(--text-tertiary)', fontFamily: 'DM Mono', textTransform: 'uppercase', marginBottom: 6 }}>OPCO</div>
                     <select className="form-input" style={{ fontSize: 12, padding: '4px 8px' }} value={p.opcoStatus || ''} onChange={e => updateParticipant(p.id, { opcoStatus: e.target.value as any })}>
                       <option value="">— Non renseigné</option>
-                      <option value="en_attente">En attente</option>
-                      <option value="valide">Validé</option>
+                      <option value="valide">Accepté</option>
                       <option value="refuse">Refusé</option>
                     </select>
                   </div>
@@ -199,25 +197,8 @@ export default function ParticipantModal({ participant, onClose }: Props) {
             </div>
           )}
 
-          {/* CHECKLIST */}
-          {activeTab === 2 && (
-            <div>
-              <div style={{ marginBottom: 16, padding: '12px 14px', background: 'var(--ft-bg)', border: '1px solid var(--ft-border)', borderRadius: 'var(--radius-sm)', fontSize: 12.5, color: 'var(--ft)' }}>
-                Financeur : <strong>{p.financeur} (AIF)</strong> — checklist individuelle par élève
-              </div>
-              {[['Avant la formation', ['Créer la session (KAIROS)', 'Créer le devis AIF sur KAIROS', 'Attester du commencement (J1)']],
-                ['En fin de formation', ['Valider et télécharger le bilan', 'Créer la facture Qonto', 'Envoyer sur Chorus Pro : facture, bilan, feuille de présence']]
-              ].map(([title, items]) => (
-                <div key={title as string} className="checklist-section">
-                  <div className="checklist-title">{title as string}</div>
-                  {(items as string[]).map(item => <CheckItem key={item} label={item} />)}
-                </div>
-              ))}
-            </div>
-          )}
-
           {/* DOCUMENTS */}
-          {activeTab === 3 && (() => {
+          {activeTab === 2 && (() => {
             const norm = (s: string) => s.toLowerCase().replace(/[éèêë]/g, 'e').replace(/[àâä]/g, 'a').replace(/[ùûü]/g, 'u').replace(/[îï]/g, 'i').replace(/[ôö]/g, 'o').replace(/[ç]/g, 'c')
             // "Ayanah Mouflet" → ["ayanah", "mouflet"]
             const nameParts = p.nom.split(/\s+/).map(w => norm(w)).filter(w => w.length > 2)
@@ -345,7 +326,7 @@ export default function ParticipantModal({ participant, onClose }: Props) {
           })()}
 
           {/* NOTES */}
-          {activeTab === 4 && (
+          {activeTab === 3 && (
             <div>
               <div style={{ marginBottom: 12, fontSize: 13, color: 'var(--text-tertiary)' }}>Notes internes — visibles uniquement par l'équipe admin</div>
               <textarea className="form-input" style={{ minHeight: 160, resize: 'vertical' }} placeholder="Ajouter une note…" value={notes} onChange={e => setNotes(e.target.value)} />
@@ -357,18 +338,6 @@ export default function ParticipantModal({ participant, onClose }: Props) {
         </div>
       </div>
       {showEdit && <EditParticipantModal participant={p} onClose={() => setShowEdit(false)} />}
-    </div>
-  )
-}
-
-function CheckItem({ label }: { label: string }) {
-  const [done, setDone] = useState(false)
-  return (
-    <div className={`checklist-item${done ? ' done' : ''}`} onClick={() => setDone(v => !v)}>
-      <div className="check-box">
-        {done && <svg viewBox="0 0 10 10" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" style={{ width: 10, height: 10 }}><path d="M1.5 5l2.5 2.5 4.5-4.5"/></svg>}
-      </div>
-      <span className="check-text">{label}</span>
     </div>
   )
 }
