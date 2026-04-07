@@ -173,33 +173,28 @@ export default function ParticipantModal({ participant, onClose }: Props) {
               return dp[m][n]
             }
 
-            const scoreMatch = (parts: string[], filename: string) => {
-              const fnRaw = norm(filename.replace(/\.[^.]+$/, ''))
-              const fnFlat = fnRaw.replace(/[_\-.\s]+/g, '')
-              const fnSpaced = fnRaw.replace(/[_\-.\s]+/g, ' ')
-              let score = 0
-              for (const part of parts) {
-                if (fnFlat.includes(part) || fnSpaced.includes(part)) { score++; continue }
-                const maxDist = part.length >= 6 ? 2 : part.length >= 4 ? 1 : 0
-                if (maxDist > 0 && fuzzyContains(fnFlat, part, maxDist)) { score++; continue }
-              }
-              return score
+            // Common words to ignore in filenames when extracting name-like parts
+            const IGNORE = new Set(['bilan', 'formation', 'presence', 'feuille', 'attestation', 'certificat', 'facture', 'contrat', 'programme', 'pdf', 'doc', 'stefen'])
+
+            const partMatches = (part: string, fnFlat: string) => {
+              if (fnFlat.includes(part)) return true
+              const maxDist = part.length >= 6 ? 2 : part.length >= 4 ? 1 : 0
+              return maxDist > 0 && fuzzyContains(fnFlat, part, maxDist)
             }
 
-            // Build name parts for all participants to compare scores
-            const allParticipantParts = participants.map(pp => ({
-              id: pp.id,
-              parts: pp.nom.split(/\s+/).map(w => norm(w)).filter(w => w.length > 2),
-            }))
-
             const isBestMatch = (filename: string) => {
-              const myScore = scoreMatch(nameParts, filename)
-              if (myScore === 0) return false
-              // Check no other participant has a strictly better score
-              for (const other of allParticipantParts) {
-                if (other.id === p.id) continue
-                if (scoreMatch(other.parts, filename) > myScore) return false
-              }
+              const fnRaw = norm(filename.replace(/\.[^.]+$/, ''))
+              const fnFlat = fnRaw.replace(/[_\-.\s]+/g, '')
+              // Check at least one of our name parts matches
+              const myMatches = nameParts.filter(part => partMatches(part, fnFlat))
+              if (myMatches.length === 0) return false
+              // Extract name-like words from filename (4+ chars, not common words)
+              const fnWords = fnRaw.replace(/[_\-.\s]+/g, ' ').split(' ').filter(w => w.length >= 4 && !IGNORE.has(w))
+              // Check if filename contains name-like words NOT in our name parts → probably someone else's doc
+              const myPartsSet = new Set(nameParts)
+              const foreignWords = fnWords.filter(w => !myPartsSet.has(w) && !nameParts.some(part => partMatches(part, w) || partMatches(w, part)))
+              // If there are foreign name-like words, this doc is likely for someone else
+              if (foreignWords.length > 0) return false
               return true
             }
 
