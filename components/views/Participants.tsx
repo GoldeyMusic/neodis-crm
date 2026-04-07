@@ -20,6 +20,21 @@ export default function Participants() {
     else { setSortKey(key); setSortDir('asc') }
   }
 
+  // Map session name → start date for chronological sort
+  const sessionDateMap = useMemo(() => {
+    const MOIS: Record<string, string> = { 'janv.': '01', 'fév.': '02', 'mars': '03', 'avr.': '04', 'mai': '05', 'juin': '06', 'juil.': '07', 'août': '08', 'sept.': '09', 'oct.': '10', 'nov.': '11', 'déc.': '12' }
+    const map = new Map<string, string>()
+    for (const s of sessions) {
+      // dates format: "20 oct. — 24 oct. 2025"
+      const m = s.dates.match(/^(\d{1,2})\s+(\S+)\s.*(\d{4})/)
+      if (m) {
+        const mm = MOIS[m[2]] || '01'
+        map.set(s.name, `${m[3]}-${mm}-${m[1].padStart(2, '0')}`)
+      }
+    }
+    return map
+  }, [sessions])
+
   const filtered = useMemo(() => {
     const list = participants.filter(p => {
       const matchSession = filterSession === 'all' || p.session === filterSession
@@ -28,11 +43,16 @@ export default function Participants() {
     })
     const mult = sortDir === 'asc' ? 1 : -1
     return list.sort((a, b) => {
+      if (sortKey === 'session') {
+        const da = sessionDateMap.get(a.session) || '9999-99-99'
+        const db = sessionDateMap.get(b.session) || '9999-99-99'
+        return da < db ? -1 * mult : da > db ? 1 * mult : 0
+      }
       const va = (a[sortKey] || '—').toLowerCase()
       const vb = (b[sortKey] || '—').toLowerCase()
       return va < vb ? -1 * mult : va > vb ? 1 * mult : 0
     })
-  }, [participants, filterSession, search, sortKey, sortDir])
+  }, [participants, filterSession, search, sortKey, sortDir, sessionDateMap])
 
   const sortIcon = (key: SortKey) => {
     if (sortKey !== key) return <svg width="10" height="10" viewBox="0 0 10 10" fill="none" stroke="var(--text-tertiary)" strokeWidth="1.5" style={{ marginLeft: 4, opacity: 0.4 }}><path d="M3 4l2-2 2 2M3 6l2 2 2-2"/></svg>
