@@ -67,7 +67,7 @@ import { authUsers } from './data'
 // IDs de participants définitivement supprimés
 const DELETED_PARTICIPANT_IDS = new Set([309])
 
-const SEED_PARTICIPANTS = participantsData.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id))
+const SEED_PARTICIPANTS = participantsData.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id)).map(p => ({ ...p, opcoStatus: p.opcoStatus || 'valide' as const, assiduite: p.assiduite || 'suivi_complet' as const }))
 
 // Détecte si une string est un base64 (pas une URL)
 function isBase64(s: string | undefined): boolean {
@@ -120,7 +120,19 @@ export function CRMProvider({ children }: { children: ReactNode }) {
         // Remplacer le seed par les données Supabase si elles existent
         if (dbSessions.length > 0) setSessions(dbSessions)
         if (dbParticipants.length > 0) {
-          setParticipants(dbParticipants.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id)))
+          const filtered = dbParticipants.filter(p => !DELETED_PARTICIPANT_IDS.has(p.id))
+          // Migration : appliquer OPCO validé + suivi complet par défaut
+          const needsStatusMigration = filtered.some(p => !p.opcoStatus && !p.assiduite)
+          const withStatus = filtered.map(p => ({
+            ...p,
+            opcoStatus: p.opcoStatus || 'valide' as const,
+            assiduite: p.assiduite || 'suivi_complet' as const,
+          }))
+          setParticipants(withStatus)
+          if (needsStatusMigration) {
+            console.log('[store] Migrating participant statuses → Supabase')
+            upsertAll('participants', withStatus)
+          }
         }
         if (dbFormateurs.length > 0) {
           // Migration : ajouter un token aux formateurs existants qui n'en ont pas
