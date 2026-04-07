@@ -65,6 +65,7 @@ export default function FormateurPortal({ params }: { params: { token: string } 
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | false>(false)
   const [activeTab, setActiveTab] = useState('recap')
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     const resolveToken = async () => {
@@ -110,7 +111,6 @@ export default function FormateurPortal({ params }: { params: { token: string } 
   )
 
   const { formateur: f } = data
-  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <div className="portal-shell">
