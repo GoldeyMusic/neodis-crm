@@ -619,7 +619,7 @@ function BudgetTab({ session }: { session: Session }) {
                 title="Annuler le paiement"
                 style={{
                   padding: '3px 8px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: 'DM Sans, sans-serif', border: '1px solid #BBF7D0',
+                  fontFamily: 'Inter, sans-serif', border: '1px solid #BBF7D0',
                   background: '#F0FDF4', color: '#16A34A', transition: 'all .12s',
                 }}>
                 ✓ Payé
@@ -648,7 +648,7 @@ function BudgetTab({ session }: { session: Session }) {
                 }}
                 style={{
                   padding: '3px 8px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: 'DM Sans, sans-serif', border: '1px solid #FED7AA',
+                  fontFamily: 'Inter, sans-serif', border: '1px solid #FED7AA',
                   background: '#FFF7ED', color: '#C2410C', transition: 'all .12s',
                 }}>
                 Marquer payé

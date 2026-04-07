@@ -196,7 +196,7 @@ function RecapTab({ data }: { data: PortalData }) {
 
   const chipStyle = (active: boolean) => ({
     padding: '4px 10px', borderRadius: 16, fontSize: 11, fontWeight: 500, cursor: 'pointer',
-    whiteSpace: 'nowrap' as const, fontFamily: 'DM Sans, sans-serif', border: '1px solid',
+    whiteSpace: 'nowrap' as const, fontFamily: 'Inter, sans-serif', border: '1px solid',
     borderColor: active ? 'var(--text-primary)' : 'var(--border)',
     background: active ? 'var(--text-primary)' : 'var(--surface)',
     color: active ? 'white' : 'var(--text-secondary)',
@@ -494,7 +494,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
 
   const chipStyle = (active: boolean) => ({
     padding: '4px 10px', borderRadius: 14, fontSize: 11, fontWeight: 500, cursor: 'pointer',
-    whiteSpace: 'nowrap' as const, fontFamily: 'DM Sans, sans-serif', border: '1px solid',
+    whiteSpace: 'nowrap' as const, fontFamily: 'Inter, sans-serif', border: '1px solid',
     borderColor: active ? 'var(--text-primary)' : 'var(--border)',
     background: active ? 'var(--text-primary)' : 'var(--surface)',
     color: active ? 'white' : 'var(--text-secondary)',
@@ -526,7 +526,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
               {[...MATIERES, ...f.spec.filter(s => !MATIERES.includes(s))].map(m => (
                 <button key={m} onClick={() => toggleMatiere(m)} style={{
                   padding: '3px 9px', borderRadius: 12, fontSize: 10, fontWeight: 500, cursor: 'pointer',
-                  fontFamily: 'DM Sans, sans-serif', border: '1px solid', transition: 'all .12s',
+                  fontFamily: 'Inter, sans-serif', border: '1px solid', transition: 'all .12s',
                   borderColor: uploadMatieres.includes(m) ? '#2563EB' : 'var(--border)',
                   background: uploadMatieres.includes(m) ? '#EFF6FF' : 'var(--surface)',
                   color: uploadMatieres.includes(m) ? '#2563EB' : 'var(--text-tertiary)',
@@ -552,7 +552,7 @@ function DocumentsTab({ data }: { data: PortalData }) {
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
                   padding: '14px 20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
-                  background: 'var(--surface)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                  background: 'var(--surface)', cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                   fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', transition: 'all .15s',
                 }}
               >

@@ -220,7 +220,7 @@ export default function Impact() {
       <div style={{ display: 'flex', gap: 4, background: 'var(--surface-2)', borderRadius: 8, padding: 3, border: '1px solid var(--border)', width: 'fit-content', marginBottom: 16 }}>
         {(['suivi', 'rapport'] as const).map(m => (
           <button key={m}
-            style={{ padding: '6px 16px', borderRadius: 6, border: 'none', fontSize: 13, fontFamily: 'DM Sans, sans-serif', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap',
+            style={{ padding: '6px 16px', borderRadius: 6, border: 'none', fontSize: 13, fontFamily: 'Inter, sans-serif', cursor: 'pointer', fontWeight: 500, whiteSpace: 'nowrap',
               background: mode === m ? 'var(--surface)' : 'transparent',
               color: mode === m ? 'var(--text-primary)' : 'var(--text-tertiary)',
               boxShadow: mode === m ? '0 1px 3px rgba(0,0,0,0.1)' : 'none',
@@ -584,7 +584,7 @@ function ImpactPanel({ participant: p, impact, updateImpact, onClose }: {
                 const active = (entry?.statut ?? '') === s.id
                 return (
                   <button key={s.id} onClick={() => update('statut', active ? '' : s.id)}
-                    style={{ padding: '6px 14px', borderRadius: 20, border: `1px solid ${active ? s.color : s.border}`, background: active ? s.bg : 'var(--surface)', color: active ? s.color : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif', fontWeight: active ? 600 : 400 }}
+                    style={{ padding: '6px 14px', borderRadius: 20, border: `1px solid ${active ? s.color : s.border}`, background: active ? s.bg : 'var(--surface)', color: active ? s.color : 'var(--text-secondary)', fontSize: 12, cursor: 'pointer', fontFamily: 'Inter, sans-serif', fontWeight: active ? 600 : 400 }}
                   >{active && '✓ '}{s.label}</button>
                 )
               })}

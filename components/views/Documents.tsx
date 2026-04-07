@@ -219,7 +219,7 @@ function FactureFormateurMatchModal({ items, formateurs, sessions, onConfirm, on
                           onClick={() => toggleSession(i, s.id)}
                           style={{
                             padding: '4px 10px', borderRadius: 20, border: '1px solid',
-                            fontSize: 11, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                            fontSize: 11, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                             transition: 'all .12s',
                             background: active ? 'var(--text-primary)' : 'var(--surface)',
                             color: active ? 'white' : 'var(--text-secondary)',
@@ -416,7 +416,7 @@ function FraisAdminModal({ items, sessions, onConfirm, onClose }: {
                       return (
                         <button key={s.id} type="button" onClick={() => toggleSession(i, s.id)} style={{
                           padding: '4px 10px', borderRadius: 20, border: '1px solid',
-                          fontSize: 11, cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                          fontSize: 11, cursor: 'pointer', fontFamily: 'Inter, sans-serif',
                           transition: 'all .12s',
                           background: active ? 'var(--text-primary)' : 'var(--surface)',
                           color: active ? 'white' : 'var(--text-secondary)',
@@ -1175,7 +1175,7 @@ function SessionPicker({ value, onChange }: { value: string; onChange: (v: strin
                 border: '1px solid',
                 fontSize: 12,
                 cursor: 'pointer',
-                fontFamily: 'DM Sans, sans-serif',
+                fontFamily: 'Inter, sans-serif',
                 transition: 'all .12s',
                 background: active ? 'var(--text-primary)' : 'var(--surface)',
                 color: active ? 'white' : 'var(--text-secondary)',

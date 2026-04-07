@@ -79,7 +79,7 @@ export default function ProfileModal({ open, onClose }: Props) {
             <div>
               <div style={{ fontSize: 13, color: 'var(--text-secondary)' }}>Photo de profil</div>
               <div style={{ fontSize: 12, color: 'var(--text-tertiary)', marginTop: 3 }}>JPG, PNG · max 2 MB</div>
-              {user?.photo && <button onClick={() => updateUser({ photo: undefined })} style={{ marginTop: 6, fontSize: 12, color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'DM Sans' }}>Supprimer</button>}
+              {user?.photo && <button onClick={() => updateUser({ photo: undefined })} style={{ marginTop: 6, fontSize: 12, color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontFamily: 'Inter' }}>Supprimer</button>}
             </div>
           </div>
 

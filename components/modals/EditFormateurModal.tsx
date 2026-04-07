@@ -78,7 +78,7 @@ export default function EditFormateurModal({ formateur, onClose }: Props) {
                       border: '1px solid',
                       fontSize: 12,
                       cursor: 'pointer',
-                      fontFamily: 'DM Sans, sans-serif',
+                      fontFamily: 'Inter, sans-serif',
                       transition: 'all .12s',
                       background: specs.includes(s) ? 'var(--text-primary)' : 'var(--surface)',
                       color: specs.includes(s) ? 'white' : 'var(--text-secondary)',

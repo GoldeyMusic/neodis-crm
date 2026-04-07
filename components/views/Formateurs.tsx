@@ -44,7 +44,7 @@ export default function Formateurs() {
 
   const chipStyle = (active: boolean) => ({
     padding: '4px 12px', borderRadius: 20, fontSize: 12, fontWeight: 500, cursor: 'pointer',
-    whiteSpace: 'nowrap' as const, fontFamily: 'DM Sans, sans-serif',
+    whiteSpace: 'nowrap' as const, fontFamily: 'Inter, sans-serif',
     border: `1px solid ${active ? 'var(--text-primary)' : 'var(--border)'}`,
     background: active ? 'var(--text-primary)' : 'var(--surface)',
     color: active ? 'white' : 'var(--text-secondary)',
