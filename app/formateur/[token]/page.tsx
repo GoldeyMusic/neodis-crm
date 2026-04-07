@@ -388,6 +388,14 @@ function DocumentsTab({ data }: { data: PortalData }) {
   const [uploadMatieres, setUploadMatieres] = useState<string[]>([])
   const [dragging, setDragging] = useState(false)
   const dragCounter = useRef(0)
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 600px)')
+    setIsMobile(mq.matches)
+    const handler = (e: MediaQueryListEvent) => setIsMobile(e.matches)
+    mq.addEventListener('change', handler)
+    return () => mq.removeEventListener('change', handler)
+  }, [])
 
   const UPLOAD_CATS = [
     { id: 'pedago', label: 'Cours / Support pédago', icon: '📚' },
@@ -520,40 +528,67 @@ function DocumentsTab({ data }: { data: PortalData }) {
           </div>
         )}
 
-        {/* Drop zone */}
-        <div
-          onDragEnter={onDragEnter}
-          onDragLeave={onDragLeave}
-          onDragOver={onDragOver}
-          onDrop={onDrop}
-          onClick={() => !uploading && fileRef.current?.click()}
-          style={{
-            border: `2px dashed ${dragging ? '#2563EB' : 'var(--border)'}`,
-            borderRadius: 'var(--radius)',
-            padding: uploading ? '16px' : '24px',
-            textAlign: 'center',
-            cursor: uploading ? 'default' : 'pointer',
-            transition: 'all .15s',
-            background: dragging ? '#EFF6FF' : 'var(--bg)',
-          }}
-        >
-          {uploading ? (
-            <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
-              <div className="portal-spinner" style={{ width: 20, height: 20, margin: '0 auto 8px' }} />
-              Upload {uploadCount}/{uploadTotal}…
+        {/* Upload zone — adaptive mobile/desktop */}
+        {isMobile ? (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {uploading ? (
+              <div style={{ padding: 16, textAlign: 'center', background: 'var(--bg)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
+                <div className="portal-spinner" style={{ width: 20, height: 20, margin: '0 auto 8px' }} />
+                <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>Upload {uploadCount}/{uploadTotal}…</div>
+              </div>
+            ) : (
+              <button
+                onClick={() => fileRef.current?.click()}
+                style={{
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+                  padding: '14px 20px', borderRadius: 'var(--radius)', border: '1px solid var(--border)',
+                  background: 'var(--surface)', cursor: 'pointer', fontFamily: 'DM Sans, sans-serif',
+                  fontSize: 13, fontWeight: 500, color: 'var(--text-primary)', transition: 'all .15s',
+                }}
+              >
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 12V4M5 7l3-3 3 3"/><path d="M3 13h10"/></svg>
+                Ajouter un fichier
+              </button>
+            )}
+            <div style={{ fontSize: 10, color: 'var(--text-tertiary)', textAlign: 'center' }}>
+              PDF, DOC, images · max 10 MB/fichier
             </div>
-          ) : (
-            <>
-              <div style={{ fontSize: 22, marginBottom: 6 }}>📎</div>
-              <div style={{ fontSize: 13, color: dragging ? '#2563EB' : 'var(--text-secondary)', fontWeight: 500 }}>
-                {dragging ? 'Lâcher pour déposer' : 'Glisser-déposer vos fichiers ici'}
+          </div>
+        ) : (
+          <div
+            onDragEnter={onDragEnter}
+            onDragLeave={onDragLeave}
+            onDragOver={onDragOver}
+            onDrop={onDrop}
+            onClick={() => !uploading && fileRef.current?.click()}
+            style={{
+              border: `2px dashed ${dragging ? '#2563EB' : 'var(--border)'}`,
+              borderRadius: 'var(--radius)',
+              padding: uploading ? '16px' : '24px',
+              textAlign: 'center',
+              cursor: uploading ? 'default' : 'pointer',
+              transition: 'all .15s',
+              background: dragging ? '#EFF6FF' : 'var(--bg)',
+            }}
+          >
+            {uploading ? (
+              <div style={{ fontSize: 12, color: 'var(--text-secondary)' }}>
+                <div className="portal-spinner" style={{ width: 20, height: 20, margin: '0 auto 8px' }} />
+                Upload {uploadCount}/{uploadTotal}…
               </div>
-              <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
-                ou cliquer pour parcourir · PDF, DOC, images · max 10 MB/fichier
-              </div>
-            </>
-          )}
-        </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 22, marginBottom: 6 }}>📎</div>
+                <div style={{ fontSize: 13, color: dragging ? '#2563EB' : 'var(--text-secondary)', fontWeight: 500 }}>
+                  {dragging ? 'Lâcher pour déposer' : 'Glisser-déposer vos fichiers ici'}
+                </div>
+                <div style={{ fontSize: 11, color: 'var(--text-tertiary)', marginTop: 4 }}>
+                  ou cliquer pour parcourir · PDF, DOC, images · max 10 MB/fichier
+                </div>
+              </>
+            )}
+          </div>
+        )}
         <input
           ref={fileRef}
           type="file"
