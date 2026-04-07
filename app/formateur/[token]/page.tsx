@@ -51,12 +51,12 @@ function getCalendarDays(year: number, month: number) {
 function isSameDay(a: Date, b: Date) { return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate() }
 function isInRange(day: Date, s: Date, e: Date) { return day.getTime() >= new Date(s.getFullYear(),s.getMonth(),s.getDate()).getTime() && day.getTime() <= new Date(e.getFullYear(),e.getMonth(),e.getDate()).getTime() }
 
-/* ── Tabs ── */
-const TABS = [
-  { id: 'recap', label: 'Mon récap', icon: '📋' },
-  { id: 'calendrier', label: 'Calendrier', icon: '📅' },
-  { id: 'documents', label: 'Documents', icon: '📁' },
-  { id: 'liens', label: 'Liens & Outils', icon: '🔗' },
+/* ── Nav items ── */
+const NAV_ITEMS = [
+  { id: 'recap', label: 'Mon récap', icon: <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="1" width="6" height="6" rx="1.5"/><rect x="9" y="1" width="6" height="6" rx="1.5"/><rect x="1" y="9" width="6" height="6" rx="1.5"/><rect x="9" y="9" width="6" height="6" rx="1.5"/></svg> },
+  { id: 'calendrier', label: 'Calendrier', icon: <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><rect x="1" y="2.5" width="14" height="12" rx="2"/><path d="M5 .5v4M11 .5v4M1 6.5h14"/><circle cx="5" cy="9.5" r=".8" fill="currentColor" stroke="none"/><circle cx="8" cy="9.5" r=".8" fill="currentColor" stroke="none"/><circle cx="11" cy="9.5" r=".8" fill="currentColor" stroke="none"/></svg> },
+  { id: 'documents', label: 'Documents', icon: <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M9 1H3a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h10a1 1 0 0 0 1-1V6L9 1z"/><path d="M9 1v5h5M5 9h6M5 12h4"/></svg> },
+  { id: 'liens', label: 'Liens & Outils', icon: <svg width="15" height="15" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M6.5 9.5a3.5 3.5 0 0 0 5 0l2-2a3.5 3.5 0 0 0-5-5l-1 1"/><path d="M9.5 6.5a3.5 3.5 0 0 0-5 0l-2 2a3.5 3.5 0 0 0 5 5l1-1"/></svg> },
 ]
 
 /* ── Page principale ── */
@@ -110,13 +110,17 @@ export default function FormateurPortal({ params }: { params: { token: string } 
   )
 
   const { formateur: f } = data
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   return (
     <div className="portal-shell">
       <header className="portal-header">
         <div className="portal-header-inner">
+          <button className="portal-hamburger" onClick={() => setSidebarOpen(o => !o)} aria-label="Menu">
+            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"><path d="M3 5h14M3 10h14M3 15h14"/></svg>
+          </button>
           <span className="portal-logo">UMA<span>NI</span></span>
-          <span style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
+          <span className="portal-sep" style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
           <span className="portal-byline">Espace formateur</span>
           <div style={{ flex: 1 }} />
           <div className="portal-user">
@@ -133,21 +137,27 @@ export default function FormateurPortal({ params }: { params: { token: string } 
         </div>
       </header>
 
-      <nav className="portal-tabs">
-        {TABS.map(t => (
-          <button key={t.id} className={`portal-tab${activeTab === t.id ? ' active' : ''}`} onClick={() => setActiveTab(t.id)}>
-            <span className="portal-tab-icon">{t.icon}</span>
-            {t.label}
-          </button>
-        ))}
-      </nav>
-
-      <main className="portal-content">
-        {activeTab === 'recap' && <RecapTab data={data} />}
-        {activeTab === 'calendrier' && <CalendrierTab data={data} />}
-        {activeTab === 'documents' && <DocumentsTab data={data} />}
-        {activeTab === 'liens' && <LiensTab data={data} />}
-      </main>
+      <div className="portal-body">
+        {sidebarOpen && <div className="portal-sidebar-overlay" onClick={() => setSidebarOpen(false)} />}
+        <nav className={`portal-sidebar${sidebarOpen ? ' portal-sidebar-open' : ''}`}>
+          {NAV_ITEMS.map(item => (
+            <div
+              key={item.id}
+              className={`nav-item${activeTab === item.id ? ' active' : ''}`}
+              onClick={() => { setActiveTab(item.id); setSidebarOpen(false) }}
+            >
+              {item.icon}
+              {item.label}
+            </div>
+          ))}
+        </nav>
+        <main className="portal-content">
+          {activeTab === 'recap' && <RecapTab data={data} />}
+          {activeTab === 'calendrier' && <CalendrierTab data={data} />}
+          {activeTab === 'documents' && <DocumentsTab data={data} />}
+          {activeTab === 'liens' && <LiensTab data={data} />}
+        </main>
+      </div>
     </div>
   )
 }
