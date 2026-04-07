@@ -17,7 +17,7 @@ export default function Topbar({ onMenuToggle }: { onMenuToggle?: () => void }) 
         </button>
         <a className="topbar-logo" href="#" onClick={e => { e.preventDefault(); setActiveView('dashboard') }} style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}>
           <img src="/umani-logo.svg" alt="UMANI" style={{ height: 28 }} />
-          UMANI
+          UMA<span style={{ color: 'var(--text-tertiary)' }}>NI</span>
         </a>
         <span className="topbar-sep" style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
         <span className="topbar-byline" style={{ fontSize: 12, color: 'var(--text-tertiary)' }}>by NEODIS</span>
