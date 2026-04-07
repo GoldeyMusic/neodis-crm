@@ -41,7 +41,12 @@ export default function Login() {
   return (
     <div className="login-screen">
       <div className="login-card">
-        <div className="login-logo">UMANI <span style={{ fontSize: '0.6em', fontWeight: 400, opacity: 0.6 }}>by</span> NEO<span>DIS</span></div>
+        <div className="login-logo" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '10px' }}>
+          <img src="/umani-logo.svg" alt="UMANI" style={{ height: 36 }} />
+          <span style={{ color: 'var(--text-primary)' }}>UMA<span style={{ color: 'var(--text-tertiary)' }}>NI</span></span>
+          <span style={{ fontSize: '0.6em', fontWeight: 400, opacity: 0.6 }}>by</span>
+          <span>NEO<span style={{ color: 'var(--text-tertiary)' }}>DIS</span></span>
+        </div>
         <div className="login-tagline">Plateforme de gestion pédagogique</div>
         <div className="login-title">Connexion</div>
         <div className="login-subtitle">Accès réservé à l'équipe admin</div>
