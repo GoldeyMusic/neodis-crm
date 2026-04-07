@@ -3,6 +3,7 @@ import { useState, useMemo } from 'react'
 import { useCRM } from '@/lib/store'
 import { Participant } from '@/lib/data'
 import ParticipantModal from '../modals/ParticipantModal'
+import AddParticipantModal from '../modals/AddParticipantModal'
 
 type SortKey = 'nom' | 'nomArtiste' | 'session' | 'tel'
 type SortDir = 'asc' | 'desc'
@@ -10,6 +11,7 @@ type SortDir = 'asc' | 'desc'
 export default function Participants() {
   const { participants, sessions, showToast } = useCRM()
   const [selected, setSelected] = useState<Participant | null>(null)
+  const [showAdd, setShowAdd] = useState(false)
   const [search, setSearch] = useState('')
   const [filterSession, setFilterSession] = useState('all')
   const [sortKey, setSortKey] = useState<SortKey>('nom')
@@ -73,7 +75,7 @@ export default function Participants() {
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="18" height="18" rx="3" fill="#34A853" opacity=".15"/><path d="M8 8h8M8 12h8M8 16h5" stroke="#34A853" strokeWidth="1.5" strokeLinecap="round"/></svg>
             Importer Google Sheets
           </button>
-          <button className="btn btn-primary" onClick={() => showToast('Ajouter un participant — à connecter')}>
+          <button className="btn btn-primary" onClick={() => setShowAdd(true)}>
             <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2"><path d="M8 3v10M3 8h10"/></svg>
             Ajouter
           </button>
@@ -149,6 +151,7 @@ export default function Participants() {
       </div>
 
       {selected && <ParticipantModal participant={selected} onClose={() => setSelected(null)} />}
+      {showAdd && <AddParticipantModal onClose={() => setShowAdd(false)} />}
     </div>
   )
 }
