@@ -319,21 +319,28 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 .portal-error { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 60vh; text-align: center; }
 
 .portal-header { background: var(--surface); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50; }
-.portal-header-inner { max-width: 900px; margin: 0 auto; padding: 16px 24px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.portal-header-inner { height: 52px; padding: 0 20px; display: flex; align-items: center; gap: 12px; }
 
-.portal-avatar { width: 44px; height: 44px; border-radius: 50%; background: var(--text-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 600; font-family: 'DM Mono', monospace; flex-shrink: 0; overflow: hidden; }
+.portal-logo { font-family: 'DM Mono', monospace; font-size: 13px; font-weight: 500; letter-spacing: .12em; color: var(--text-primary); text-transform: uppercase; }
+.portal-logo span { color: var(--text-tertiary); }
+.portal-byline { font-size: 12px; color: var(--text-tertiary); }
 
-.portal-name { font-weight: 600; font-size: 15px; color: var(--text-primary); }
-.portal-role { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
-.portal-brand { display: flex; align-items: center; gap: 4px; }
+.portal-user { display: flex; align-items: center; gap: 10px; padding: 5px 10px; border-radius: var(--radius-sm); border: 1px solid transparent; transition: all .12s; }
+.portal-user:hover { background: var(--surface-2); border-color: var(--border); }
+.portal-user-info { min-width: 0; }
 
-.portal-tabs { max-width: 900px; margin: 0 auto; padding: 0 24px; display: flex; gap: 4px; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
-.portal-tab { display: inline-flex; align-items: center; gap: 6px; padding: 12px 16px; border: none; background: none; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
+.portal-avatar { width: 30px; height: 30px; border-radius: 50%; background: var(--text-primary); color: white; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 600; font-family: 'DM Mono', monospace; flex-shrink: 0; overflow: hidden; }
+
+.portal-name { font-weight: 500; font-size: 13px; color: var(--text-primary); line-height: 1.2; }
+.portal-role { font-size: 11px; color: var(--text-tertiary); line-height: 1.2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
+
+.portal-tabs { padding: 0 28px; display: flex; gap: 0; background: var(--surface); border-bottom: 1px solid var(--border); overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.portal-tab { display: inline-flex; align-items: center; gap: 6px; padding: 11px 18px; border: none; background: none; font-family: 'DM Sans', sans-serif; font-size: 13px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all .15s; white-space: nowrap; flex-shrink: 0; }
 .portal-tab:hover { color: var(--text-secondary); }
 .portal-tab.active { color: var(--text-primary); font-weight: 500; border-bottom-color: var(--text-primary); }
 .portal-tab-icon { font-size: 14px; }
 
-.portal-content { max-width: 900px; margin: 0 auto; padding: 24px; }
+.portal-content { max-width: 960px; margin: 0 auto; padding: 28px 32px; }
 
 .portal-kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin-bottom: 24px; }
 .portal-kpi { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; text-align: center; }
@@ -453,7 +460,10 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
 
 /* Portal responsive */
 @media (max-width: 600px) {
-  .portal-header-inner { padding: 12px 16px; gap: 10px; }
+  .portal-header-inner { padding: 0 12px; height: 48px; gap: 8px; }
+  .portal-byline { display: none; }
+  .portal-user-info { display: none; }
+  .portal-avatar { width: 28px; height: 28px; font-size: 10px; }
   .portal-tabs { padding: 0 12px; gap: 0; }
   .portal-tab { padding: 10px 12px; font-size: 12px; gap: 4px; }
   .portal-tab-icon { font-size: 13px; }
@@ -462,10 +472,6 @@ html, body { height: 100%; font-family: 'DM Sans', sans-serif; background: var(-
   .portal-kpi { padding: 12px 8px; }
   .portal-kpi-value { font-size: 18px; }
   .portal-kpi-label { font-size: 10px; }
-  .portal-brand { display: none; }
-  .portal-name { font-size: 14px; }
-  .portal-role { font-size: 11px; }
-  .portal-avatar { width: 38px; height: 38px; font-size: 12px; }
   .portal-card { padding: 12px; }
   .portal-section-title { font-size: 13px; }
   .portal-empty { padding: 24px 16px; font-size: 12px; }

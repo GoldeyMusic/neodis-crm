@@ -115,20 +115,20 @@ export default function FormateurPortal({ params }: { params: { token: string } 
     <div className="portal-shell">
       <header className="portal-header">
         <div className="portal-header-inner">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          <span className="portal-logo">UMA<span>NI</span></span>
+          <span style={{ color: 'var(--border-strong)', fontSize: 16 }}>|</span>
+          <span className="portal-byline">Espace formateur</span>
+          <div style={{ flex: 1 }} />
+          <div className="portal-user">
             <div className="portal-avatar">
               {f.photo ? <img src={f.photo} alt={f.nom} style={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : f.nom.split(' ').map(n => n[0]).join('').slice(0,2).toUpperCase()}
             </div>
-            <div>
+            <div className="portal-user-info">
               <div className="portal-name">{f.nom}</div>
               <div className="portal-role">
                 {f.type === 'principal' ? 'Formateur' : 'Intervenant Masterclass'} · {f.spec.join(', ')}
               </div>
             </div>
-          </div>
-          <div className="portal-brand">
-            <span style={{ fontFamily: 'DM Mono', fontSize: 11, letterSpacing: '.1em', textTransform: 'uppercase' }}>UMANI</span>
-            <span style={{ fontFamily: 'DM Mono', fontSize: 11, color: 'var(--text-tertiary)' }}> by NEODIS</span>
           </div>
         </div>
       </header>
